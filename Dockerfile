@@ -14,7 +14,8 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 ENV JAVA_OPTS="-XX:MaxRAMPercentage=75"
+ENV PORT=10000
 
-EXPOSE 8080
+EXPOSE 10000
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
