@@ -2702,3 +2702,148 @@ Only if fixes were needed:
 git add -A
 git commit -m "fix: address regressions found in full suite run"
 ```
+
+---
+
+### Task 14: Swagger / OpenAPI documentation
+
+Added mid-plan at the user's request (not part of the original spec) — layered on top of the finished, verified Task 1-13 controllers rather than woven into the TDD loop mid-flight.
+
+**Files:**
+- Modify: `pom.xml`
+- Modify: `src/main/java/com/example/backend/config/SecurityConfig.java`
+- Create: `src/main/java/com/example/backend/config/OpenApiConfig.java`
+- Test: `src/test/java/com/example/backend/config/OpenApiIT.java`
+
+**Interfaces:**
+- Consumes: every existing `@RestController` (Auth, User, Category, Product) — springdoc generates the spec from their existing annotations, no controller code changes needed.
+- Produces: `GET /v3/api-docs` (raw OpenAPI JSON), `GET /swagger-ui/index.html` (interactive UI) — both public, unauthenticated.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `src/test/java/com/example/backend/config/OpenApiIT.java`:
+
+```java
+package com.example.backend.config;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+class OpenApiIT {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void apiDocsArePubliclyReachable() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$.paths./api/products").exists())
+                .andExpect(jsonPath("$.paths./api/auth/register").exists());
+    }
+
+    @Test
+    void swaggerUiIsPubliclyReachable() throws Exception {
+        mockMvc.perform(get("/swagger-ui/index.html"))
+                .andExpect(status().isOk());
+    }
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `./mvnw test -Dtest=OpenApiIT`
+Expected: FAIL — springdoc isn't on the classpath yet, so neither endpoint exists (404 on both, or a context-startup failure on the security-permit paths since they don't exist yet either).
+
+- [ ] **Step 3: Add the springdoc dependency**
+
+Add to `pom.xml`'s `<dependencies>` (springdoc-openapi major version 3.x tracks Spring Boot major version 4.x — 3.1.0 is built against Spring Boot 4.1.0, matching this project's 4.1.1):
+
+```xml
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+```
+
+- [ ] **Step 4: Permit the OpenAPI/Swagger paths in `SecurityConfig`**
+
+Modify `src/main/java/com/example/backend/config/SecurityConfig.java` — add `/v3/api-docs/**` and `/swagger-ui/**` to the existing `permitAll()` matchers (alongside `/api/auth/**`), in the `authorizeHttpRequests` block:
+
+```java
+                        .requestMatchers("/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+```
+
+(This replaces the existing `.requestMatchers("/api/auth/**").permitAll()` line — fold the new paths into the same matcher rather than adding a second line.)
+
+- [ ] **Step 5: Add `OpenApiConfig`**
+
+Create `src/main/java/com/example/backend/config/OpenApiConfig.java`:
+
+```java
+package com.example.backend.config;
+
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class OpenApiConfig {
+
+    // springdoc tự sinh tài liệu OpenAPI từ các @RestController có sẵn.
+    // Bean này chỉ thêm metadata (tên/mô tả API) và khai báo scheme JWT Bearer
+    // để nút "Authorize" trên Swagger UI có thể gắn header Authorization: Bearer <token>
+    // vào các request thử nghiệm ngay trên giao diện, không cần Postman/curl.
+    @Bean
+    public OpenAPI backendOpenApi() {
+        String bearerScheme = "bearerAuth";
+
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Ecommerce Backend API")
+                        .version("v1")
+                        .description("Auth/User + Product/Catalog API"))
+                .components(new Components()
+                        .addSecuritySchemes(bearerScheme, new SecurityScheme()
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")))
+                .addSecurityItem(new SecurityRequirement().addList(bearerScheme));
+    }
+}
+```
+
+- [ ] **Step 6: Run test to verify it passes**
+
+Run: `./mvnw test -Dtest=OpenApiIT`
+Expected: PASS (both tests).
+
+- [ ] **Step 7: Run the full suite**
+
+Run: `./mvnw test`
+Expected: BUILD SUCCESS, all tests passing (no regressions from the `SecurityConfig` matcher change).
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add pom.xml src/main/java/com/example/backend/config/SecurityConfig.java \
+        src/main/java/com/example/backend/config/OpenApiConfig.java \
+        src/test/java/com/example/backend/config/OpenApiIT.java
+git commit -m "feat: add Swagger/OpenAPI documentation via springdoc"
+```

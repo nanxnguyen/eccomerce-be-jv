@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: backend
+      POSTGRES_USER: backend
+      POSTGRES_PASSWORD: backend
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backend"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Image build bằng Cloud Native Buildpacks (đã cấu hình sẵn trong pom.xml), không cần Dockerfile:
+  #   ./mvnw spring-boot:build-image
+  # rồi mới `docker compose up app`. Không tự build ở đây vì compose không tự chạy Maven được.
+  app:
+    image: backend:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://db:5432/backend
+      DB_USERNAME: backend
+      DB_PASSWORD: backend
+      JWT_SECRET: ${JWT_SECRET:?set a real 32+ char secret}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      VNPAY_MERCHANT_CODE: ${VNPAY_MERCHANT_CODE:-CHANGE_ME}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-CHANGE_ME}
+      VNPAY_PAY_URL: ${VNPAY_PAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      VNPAY_RETURN_URL: ${VNPAY_RETURN_URL:-http://localhost:8080/api/payments/webhooks/vnpay}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_CHANGE_ME}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_CHANGE_ME}
+
+volumes:
+  db_data:
