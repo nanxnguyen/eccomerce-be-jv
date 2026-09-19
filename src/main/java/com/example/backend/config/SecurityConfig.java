@@ -2,6 +2,8 @@ package com.example.backend.config;
 
 import com.example.backend.security.JwtAuthFilter;
 import com.example.backend.logging.HttpExchangeLoggingFilter;
+import com.example.backend.security.KeycloakJwtAuthenticationConverter;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +19,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -39,6 +43,9 @@ public class SecurityConfig {
     // Comma-separated, đọc từ app.cors.allowed-origins (application.properties/application-prod.properties).
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
+
+    @Value("${app.keycloak.enabled:false}")
+    private boolean keycloakEnabled;
 
     // BCrypt: thuật toán hash mật khẩu một chiều (không thể giải mã ngược), có "salt" ngẫu nhiên
     // tự động nên cùng 1 mật khẩu hash 2 lần ra 2 chuỗi khác nhau -> chống rainbow-table attack.
@@ -73,7 +80,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter,
-                                                   HttpExchangeLoggingFilter httpExchangeLoggingFilter) throws Exception {
+                                                   HttpExchangeLoggingFilter httpExchangeLoggingFilter,
+                                                   KeycloakJwtAuthenticationConverter keycloakConverter,
+                                                   ObjectProvider<BearerTokenResolver> bearerTokenResolver) throws Exception {
         http
                 // CSRF (Cross-Site Request Forgery) là rủi ro của app dùng session cookie: browser tự
                 // động gửi kèm cookie trong mọi request, kể cả request giả mạo từ site khác, nên cần
@@ -117,7 +126,13 @@ public class SecurityConfig {
                 // form-login mặc định của Spring Security) để SecurityContext có Authentication từ JWT
                 // sớm nhất có thể, trước khi các bước authorization phía sau kiểm tra quyền truy cập.
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(httpExchangeLoggingFilter, JwtAuthFilter.class);
+                .addFilterAfter(httpExchangeLoggingFilter, BearerTokenAuthenticationFilter.class);
+
+        if (keycloakEnabled) {
+            http.oauth2ResourceServer(oauth2 -> oauth2
+                    .bearerTokenResolver(bearerTokenResolver.getObject())
+                    .jwt(jwt -> jwt.jwtAuthenticationConverter(keycloakConverter)));
+        }
 
         return http.build();
     }

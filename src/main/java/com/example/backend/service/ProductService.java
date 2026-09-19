@@ -62,6 +62,20 @@ public class ProductService {
         return page.map(ProductSummaryResponse::from);
     }
 
+    @Transactional(readOnly = true)
+    public Page<ProductSummaryResponse> listAdmin(ProductStatus status, Long categoryId, String search, Pageable pageable) {
+        String normalizedSearch = search == null || search.isBlank() ? null : search.trim();
+        return productRepository.findAdminProducts(status, categoryId, normalizedSearch, pageable)
+                .map(ProductSummaryResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductResponse getByIdAdmin(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        return ProductResponse.from(product);
+    }
+
     // Endpoint public, ai cũng gọi được (không cần token) - phải lọc status = ACTIVE giống list().
     // Nếu không lọc: 1 sản phẩm bị admin ẩn (INACTIVE) qua update() vẫn xem được bình thường chỉ
     // cần biết đúng slug, phá vỡ mục đích của việc ẩn sản phẩm. Chưa có cơ chế "admin xem trước

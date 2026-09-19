@@ -44,8 +44,11 @@ public class User {
     private String email;
 
     // Lưu trữ mật khẩu dưới dạng hash (BCrypt), không bao giờ lưu mật khẩu plain text
-    @Column(nullable = false)
+    @Column
     private String passwordHash;
+
+    @Column(name = "keycloak_subject", unique = true, length = 255)
+    private String keycloakSubject;
 
     private String phone;
 

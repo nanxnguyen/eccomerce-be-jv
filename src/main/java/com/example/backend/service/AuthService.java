@@ -86,7 +86,7 @@ public class AuthService {
         // So khớp mật khẩu bằng passwordEncoder.matches(), KHÔNG bao giờ so sánh chuỗi (==, .equals())
         // vì passwordHash trong DB là chuỗi đã hash (BCrypt), không phải mật khẩu gốc - so sánh
         // chuỗi trực tiếp sẽ luôn sai. matches() tự hash lại mật khẩu vừa nhập bằng cùng salt rồi so sánh.
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BadCredentialsException("Invalid email or password");
         }
 

@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     // Tìm user theo email, trả về Optional (có thể không tìm thấy)
     Optional<User> findByEmail(String email);
+    Optional<User> findByKeycloakSubject(String keycloakSubject);
 
     // Kiểm tra email có tồn tại không (trả về true/false)
     boolean existsByEmail(String email);

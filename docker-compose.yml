@@ -27,6 +27,21 @@ services:
       timeout: 5s
       retries: 10
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.3
+    restart: unless-stopped
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-dev-only-change-me}
+      KC_HOSTNAME: http://localhost:8180
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "127.0.0.1:8180:8080"
+    volumes:
+      - ./config/keycloak:/opt/keycloak/data/import:ro
+      - keycloak_data:/opt/keycloak/data
+
   # Image build bằng Cloud Native Buildpacks (đã cấu hình sẵn trong pom.xml), không cần Dockerfile:
   #   ./mvnw spring-boot:build-image
   # rồi mới `docker compose up app`. Không tự build ở đây vì compose không tự chạy Maven được.
@@ -38,6 +53,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     ports:
       - "8080:8080"
     expose:
@@ -52,6 +69,10 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:?set a real 32+ char secret}
+      KEYCLOAK_ENABLED: "true"
+      KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/ecommerce
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/ecommerce/protocol/openid-connect/certs
+      KEYCLOAK_AUDIENCE: ecommerce-api
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
       VNPAY_MERCHANT_CODE: ${VNPAY_MERCHANT_CODE:-CHANGE_ME}
       VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-CHANGE_ME}
@@ -107,3 +128,4 @@ volumes:
   grafana_data:
   loki_data:
   alloy_data:
+  keycloak_data:
