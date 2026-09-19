@@ -52,12 +52,12 @@ class CartControllerIT {
         User customer = userRepository.save(User.builder()
                 .name("Nhut").email("nhut@example.com")
                 .passwordHash(passwordEncoder.encode("password123")).role(Role.CUSTOMER).build());
-        token = jwtService.generateToken(customer.getEmail(), customer.getRole().name());
+        token = jwtService.generateToken(customer.getId(), customer.getRole().name());
 
         User admin = userRepository.save(User.builder()
                 .name("Admin").email("admin@example.com")
                 .passwordHash(passwordEncoder.encode("password123")).role(Role.ADMIN).build());
-        adminToken = jwtService.generateToken(admin.getEmail(), admin.getRole().name());
+        adminToken = jwtService.generateToken(admin.getId(), admin.getRole().name());
 
         variantId = seedVariant();
     }

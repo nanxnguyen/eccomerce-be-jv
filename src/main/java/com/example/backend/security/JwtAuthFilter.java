@@ -52,19 +52,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = header.substring(7);
         // Toàn bộ việc đọc token + tra cứu user nằm trong 1 try/catch RuntimeException:
-        // - jwtService.extractEmail(token) ném lỗi nếu token sai định dạng/chữ ký hỏng/hết hạn.
-        // - userDetailsService.loadUserByUsername(email) ném UsernameNotFoundException (cũng là
-        //   RuntimeException) nếu email trong token hợp lệ nhưng user đã bị xóa khỏi DB sau khi
+        // - jwtService.extractUserId(token) ném lỗi nếu token sai định dạng/chữ ký hỏng/hết hạn.
+        // - userDetailsService.loadUserById(userId) ném UsernameNotFoundException (cũng là
+        //   RuntimeException) nếu userId trong token hợp lệ nhưng user đã bị xóa khỏi DB sau khi
         //   token được cấp. Trước đây lệnh này nằm NGOÀI try/catch nên lỗi này sẽ vọt thẳng ra
         //   ngoài filter -> 500 thô, kể cả trên endpoint public như GET /api/products, vì filter
         //   này chạy TRƯỚC khi Spring Security kịp phân biệt public/protected. Gộp chung 1 try để
         //   cả 2 loại lỗi đều được xử lý giống nhau: coi như request chưa xác thực (anonymous).
         try {
-            String email = jwtService.extractEmail(token);
+            Long userId = jwtService.extractUserId(token);
             // Chỉ set Authentication nếu chưa có (tránh ghi đè nếu có cơ chế xác thực khác đã chạy trước)
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-                if (jwtService.isTokenValid(token, email)) {
+            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserById(userId);
+                if (jwtService.isTokenValid(token)) {
                     // principal = userDetails, credentials = null (không cần mật khẩu nữa vì đã xác thực bằng token)
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

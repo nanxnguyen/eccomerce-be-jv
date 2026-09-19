@@ -51,7 +51,7 @@ class CategoryControllerIT {
                 .role(Role.ADMIN)
                 .build();
         userRepository.save(admin);
-        adminToken = jwtService.generateToken(admin.getEmail(), admin.getRole().name());
+        adminToken = jwtService.generateToken(admin.getId(), admin.getRole().name());
     }
 
     @Test
@@ -82,7 +82,7 @@ class CategoryControllerIT {
                 .role(Role.CUSTOMER)
                 .build();
         userRepository.save(customer);
-        String customerToken = jwtService.generateToken(customer.getEmail(), customer.getRole().name());
+        String customerToken = jwtService.generateToken(customer.getId(), customer.getRole().name());
 
         String body = objectMapper.writeValueAsString(new CategoryRequest("Fashion", "fashion", "Clothes"));
 

@@ -10,10 +10,11 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 /**
- * Dịch vụ JWT (JSON Web Token) - cung cấp token được signed để xác thực người dùng.
- * JWT là một chuỗi được mã hóa chứa thông tin (email, vai trò, thời hạn) và được ký bằng khóa bí mật.
+ * Dịch vụ JWT (JSON Web Token) - cung cấp access token được signed để xác thực người dùng.
+ * JWT là một chuỗi được mã hóa chứa thông tin (userId, vai trò, thời hạn) và được ký bằng khóa bí mật.
  * Client gửi token này trong header của mỗi request, server xác thực token bằng cùng khóa bí mật.
  */
 @Component
@@ -33,25 +34,27 @@ public class JwtService {
     }
 
     /**
-     * Tạo JWT token mới chứa email và vai trò, ký bằng khóa bí mật.
-     * Token này sẽ gửi cho client và client gửi lại trong mỗi request để chứng minh danh tính.
+     * Tạo JWT access token mới chứa userId (subject) và vai trò, ký bằng khóa bí mật.
+     * sub = userId thay vì email vì email có thể đổi; jti (random UUID) để token có định danh
+     * riêng, dùng cho việc blacklist theo từng token sau này (Phase 2, auth:blacklist:{jti}).
      */
-    public String generateToken(String email, String role) {
+    public String generateToken(Long userId, String role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
-                .subject(email)           // Chủ thể token là email người dùng
-                .claim("role", role)      // Thêm thông tin vai trò vào token
-                .issuedAt(now)            // Thời điểm phát hành
-                .expiration(expiry)       // Thời điểm token hết hạn
-                .signWith(key, Jwts.SIG.HS256)  // Ký token bằng khóa bí mật
-                .compact();               // Chuyển thành string
+                .subject(userId.toString())
+                .claim("role", role)
+                .id(UUID.randomUUID().toString())
+                .issuedAt(now)
+                .expiration(expiry)
+                .signWith(key, Jwts.SIG.HS256)
+                .compact();
     }
 
-    // Lấy email từ token (email được lưu dưới dạng subject)
-    public String extractEmail(String token) {
-        return extractAllClaims(token).getSubject();
+    // Lấy userId từ token (userId được lưu dưới dạng subject)
+    public Long extractUserId(String token) {
+        return Long.valueOf(extractAllClaims(token).getSubject());
     }
 
     // Lấy vai trò từ token
@@ -59,19 +62,21 @@ public class JwtService {
         return extractAllClaims(token).get("role", String.class);
     }
 
+    // Lấy jti (định danh riêng của token)
+    public String extractJti(String token) {
+        return extractAllClaims(token).getId();
+    }
+
     /**
-     * Kiểm tra token có hợp lệ không:
-     * - Email trong token phải khớp expectedEmail
-     * - Token chưa hết hạn
-     * Catch JwtException: nếu token bị giả mạo hay lỗi gì, trả về false thay vì throw exception
-     * (Cách an toàn cho caller - không cần try-catch mỗi lần gọi)
+     * Kiểm tra token có hợp lệ không: chữ ký đúng và chưa hết hạn.
+     * Catch JwtException: nếu token bị giả mạo, hết hạn, hay lỗi gì, trả về false thay vì throw
+     * exception (cách an toàn cho caller - không cần try-catch mỗi lần gọi).
      */
-    public boolean isTokenValid(String token, String expectedEmail) {
+    public boolean isTokenValid(String token) {
         try {
             Claims claims = extractAllClaims(token);
-            return claims.getSubject().equals(expectedEmail) && claims.getExpiration().after(new Date());
+            return claims.getExpiration().after(new Date());
         } catch (JwtException e) {
-            // Token bị giả mạo, hết hạn, hoặc lỗi ký → không hợp lệ
             return false;
         }
     }

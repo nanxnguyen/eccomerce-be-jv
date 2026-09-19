@@ -65,7 +65,7 @@ class ProductControllerIT {
                 .role(Role.ADMIN)
                 .build();
         userRepository.save(admin);
-        adminToken = jwtService.generateToken(admin.getEmail(), admin.getRole().name());
+        adminToken = jwtService.generateToken(admin.getId(), admin.getRole().name());
 
         Category category = categoryRepository.save(
                 Category.builder().name("Fashion").slug("fashion").description("Clothes").build());
@@ -144,7 +144,7 @@ class ProductControllerIT {
                 .role(Role.CUSTOMER)
                 .build();
         userRepository.save(customer);
-        String customerToken = jwtService.generateToken(customer.getEmail(), customer.getRole().name());
+        String customerToken = jwtService.generateToken(customer.getId(), customer.getRole().name());
 
         String productBody = objectMapper.writeValueAsString(
                 new ProductRequest(categoryId, "T-Shirt", "t-shirt", "Basic tee", null));

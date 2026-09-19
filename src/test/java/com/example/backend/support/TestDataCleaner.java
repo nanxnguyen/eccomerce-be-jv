@@ -6,6 +6,7 @@ import com.example.backend.repository.CartRepository;
 import com.example.backend.repository.CategoryRepository;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.ProductRepository;
+import com.example.backend.repository.RefreshTokenRepository;
 import com.example.backend.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class TestDataCleaner {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public TestDataCleaner(OrderRepository orderRepository,
                             CartItemRepository cartItemRepository,
@@ -32,7 +34,8 @@ public class TestDataCleaner {
                             AddressRepository addressRepository,
                             ProductRepository productRepository,
                             UserRepository userRepository,
-                            CategoryRepository categoryRepository) {
+                            CategoryRepository categoryRepository,
+                            RefreshTokenRepository refreshTokenRepository) {
         this.orderRepository = orderRepository;
         this.cartItemRepository = cartItemRepository;
         this.cartRepository = cartRepository;
@@ -40,6 +43,7 @@ public class TestDataCleaner {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     public void cleanAll() {
@@ -52,6 +56,8 @@ public class TestDataCleaner {
         cartRepository.deleteAll();
         addressRepository.deleteAll();
         productRepository.deleteAll();
+        // refresh_tokens.user_id FK vào users - phải xoá trước userRepository.deleteAll().
+        refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
         categoryRepository.deleteAll();
     }

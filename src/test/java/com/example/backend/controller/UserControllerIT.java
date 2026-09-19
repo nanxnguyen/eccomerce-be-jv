@@ -47,7 +47,7 @@ class UserControllerIT {
                         .content(registerBody))
                 .andReturn().getResponse().getContentAsString();
 
-        String token = objectMapper.readTree(response).get("token").asText();
+        String token = objectMapper.readTree(response).get("accessToken").asText();
 
         mockMvc.perform(get("/api/users/me")
                         .header("Authorization", "Bearer " + token))

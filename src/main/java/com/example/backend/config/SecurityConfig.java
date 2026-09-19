@@ -84,7 +84,10 @@ public class SecurityConfig {
                         // tài liệu để biết cách lấy token nhưng lại cần token để xem tài liệu. Ở prod,
                         // springdoc.api-docs.enabled=false/springdoc.swagger-ui.enabled=false (application-prod.properties)
                         // tắt hẳn 2 endpoint này nên rule permitAll ở đây không còn lộ gì.
-                        .requestMatchers("/api/auth/**", "/api/payments/webhooks/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+                        // /api/auth/logout-all KHÔNG nằm trong danh sách permitAll - nó cần biết "user
+                        // hiện tại" nên bắt buộc access token hợp lệ, rơi vào rule anyRequest().authenticated().
+                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout",
+                                "/api/payments/webhooks/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         // Health check cho load balancer/k8s probe - không cần (và không nên) xác thực.
                         .requestMatchers("/actuator/health/**").permitAll()
                         // Khách vãng lai (chưa đăng nhập) vẫn xem được danh mục/sản phẩm (GET),

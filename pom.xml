@@ -58,6 +58,17 @@
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+		<!-- Spring Boot 4.x tách autoconfiguration Flyway ra module riêng (spring-boot-flyway) khỏi
+		flyway-core/flyway-database-postgresql - thiếu dòng này thì FlywayAutoConfiguration không
+		bao giờ chạy: không lỗi, không log, chỉ âm thầm không migrate gì cả. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-flyway</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
 		</dependency>

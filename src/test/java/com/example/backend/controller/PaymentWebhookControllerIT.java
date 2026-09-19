@@ -69,7 +69,7 @@ class PaymentWebhookControllerIT {
         User admin = userRepository.save(User.builder()
                 .name("Admin").email("admin@example.com")
                 .passwordHash(passwordEncoder.encode("password123")).role(Role.ADMIN).build());
-        adminToken = jwtService.generateToken(admin.getEmail(), admin.getRole().name());
+        adminToken = jwtService.generateToken(admin.getId(), admin.getRole().name());
     }
 
     @Test
@@ -175,7 +175,7 @@ class PaymentWebhookControllerIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(response).get("token").asText();
+        return objectMapper.readTree(response).get("accessToken").asText();
     }
 
     private Long createAddress(String token) throws Exception {

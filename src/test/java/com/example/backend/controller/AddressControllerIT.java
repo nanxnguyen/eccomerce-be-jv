@@ -45,7 +45,7 @@ class AddressControllerIT {
         User user = userRepository.save(User.builder()
                 .name("Nhut").email("nhut@example.com")
                 .passwordHash(passwordEncoder.encode("password123")).role(Role.CUSTOMER).build());
-        token = jwtService.generateToken(user.getEmail(), user.getRole().name());
+        token = jwtService.generateToken(user.getId(), user.getRole().name());
     }
 
     @Test
@@ -99,7 +99,7 @@ class AddressControllerIT {
         User other = userRepository.save(User.builder()
                 .name("Other").email("other@example.com")
                 .passwordHash(passwordEncoder.encode("password123")).role(Role.CUSTOMER).build());
-        String otherToken = jwtService.generateToken(other.getEmail(), other.getRole().name());
+        String otherToken = jwtService.generateToken(other.getId(), other.getRole().name());
 
         String body = objectMapper.writeValueAsString(
                 new AddressRequest("Hacker", "0999999999", "999 Nowhere", null, null, null));
