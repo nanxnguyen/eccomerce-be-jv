@@ -90,6 +90,8 @@ public class SecurityConfig {
                                 "/api/payments/webhooks/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         // Health check cho load balancer/k8s probe - không cần (và không nên) xác thực.
                         .requestMatchers("/actuator/health/**").permitAll()
+                        // Prometheus scrape endpoint is served on the private management port.
+                        .requestMatchers("/actuator/prometheus").permitAll()
                         // Khách vãng lai (chưa đăng nhập) vẫn xem được danh mục/sản phẩm (GET),
                         // nhưng sửa/xóa (POST/PUT/DELETE) thì rơi vào rule "anyRequest().authenticated()" bên dưới.
                         .requestMatchers(HttpMethod.GET, "/api/categories/**", "/api/products/**").permitAll()

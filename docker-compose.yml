@@ -40,11 +40,14 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
+    expose:
+      - "8081"
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      DB_URL: jdbc:postgresql://db:5432/backend
-      DB_USERNAME: backend
-      DB_PASSWORD: backend
+      PORT: 8080
+      DATABASE_URL: jdbc:postgresql://db:5432/backend
+      SPRING_DATASOURCE_USERNAME: backend
+      SPRING_DATASOURCE_PASSWORD: backend
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:?set a real 32+ char secret}
@@ -56,5 +59,28 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_CHANGE_ME}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_CHANGE_ME}
 
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+
 volumes:
   db_data:
+  grafana_data:
