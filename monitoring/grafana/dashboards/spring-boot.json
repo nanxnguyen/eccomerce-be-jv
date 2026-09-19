@@ -48,6 +48,15 @@
       "targets": [{ "expr": "jvm_threads_live_threads", "legendFormat": "Live threads", "refId": "A" }],
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } }
+    },
+    {
+      "id": 5,
+      "type": "logs",
+      "title": "HTTP requests and responses (sensitive fields redacted)",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 16 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service_name=~\".*backend-app.*\"} |= \"http_exchange\" | json", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "showCommonLabels": false, "wrapLogMessage": true, "prettifyLogMessage": true, "enableLogDetails": true, "sortOrder": "Descending" }
     }
   ]
 }

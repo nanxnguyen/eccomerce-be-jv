@@ -1,6 +1,7 @@
 package com.example.backend.config;
 
 import com.example.backend.security.JwtAuthFilter;
+import com.example.backend.logging.HttpExchangeLoggingFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -45,6 +47,14 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public FilterRegistrationBean<HttpExchangeLoggingFilter> httpExchangeLoggingFilterRegistration(
+            HttpExchangeLoggingFilter filter) {
+        FilterRegistrationBean<HttpExchangeLoggingFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
     // Client xác thực bằng header Authorization: Bearer <token>, không dùng cookie -> không có gì
     // để "credential" hoá, allowCredentials=false. Origin lấy từ property thay vì hardcode để prod
     // whitelist đúng domain FE thật, dev whitelist localhost.
@@ -62,7 +72,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter,
+                                                   HttpExchangeLoggingFilter httpExchangeLoggingFilter) throws Exception {
         http
                 // CSRF (Cross-Site Request Forgery) là rủi ro của app dùng session cookie: browser tự
                 // động gửi kèm cookie trong mọi request, kể cả request giả mạo từ site khác, nên cần
@@ -105,7 +116,8 @@ public class SecurityConfig {
                 // Chèn JwtAuthFilter chạy TRƯỚC UsernamePasswordAuthenticationFilter (filter xác thực
                 // form-login mặc định của Spring Security) để SecurityContext có Authentication từ JWT
                 // sớm nhất có thể, trước khi các bước authorization phía sau kiểm tra quyền truy cập.
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(httpExchangeLoggingFilter, JwtAuthFilter.class);
 
         return http.build();
     }

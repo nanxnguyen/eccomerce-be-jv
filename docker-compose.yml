@@ -45,6 +45,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       PORT: 8080
+      HTTP_LOG_BODIES: "true"
       DATABASE_URL: jdbc:postgresql://db:5432/backend
       SPRING_DATASOURCE_USERNAME: backend
       SPRING_DATASOURCE_PASSWORD: backend
@@ -69,11 +70,31 @@ services:
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
 
+  loki:
+    image: grafana/loki:3.7.0
+    restart: unless-stopped
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./monitoring/loki/config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+
+  alloy:
+    image: grafana/alloy:latest
+    restart: unless-stopped
+    depends_on:
+      - loki
+    command: run --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    volumes:
+      - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy_data:/var/lib/alloy/data
+
   grafana:
     image: grafana/grafana:latest
     restart: unless-stopped
     depends_on:
       - prometheus
+      - loki
     ports:
       - "3000:3000"
     volumes:
@@ -84,3 +105,5 @@ services:
 volumes:
   db_data:
   grafana_data:
+  loki_data:
+  alloy_data:
