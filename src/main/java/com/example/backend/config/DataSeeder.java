@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 // Chèn data mẫu (10 user, 20 category, 50 product + variant/image) để có data thật thao tác,
 // khỏi tạo tay qua API/pgAdmin từng dòng. CHỈ chạy khi bật profile "seed"
@@ -84,20 +85,22 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private List<Category> seedCategories() {
-        String[] names = {
-                "Thời trang nam", "Thời trang nữ", "Giày dép", "Túi xách", "Đồng hồ",
-                "Mỹ phẩm", "Điện thoại", "Laptop", "Phụ kiện điện tử", "Đồ gia dụng",
-                "Nội thất", "Sách", "Văn phòng phẩm", "Đồ chơi trẻ em", "Thể thao",
-                "Đồ dùng nhà bếp", "Trang sức", "Mẹ và bé", "Thú cưng", "Thực phẩm"
-        };
-
         List<Category> categories = new ArrayList<>();
-        for (String name : names) {
-            categories.add(categoryRepository.save(Category.builder()
-                    .name(name)
-                    .slug(slugify(name))
-                    .description("Danh mục " + name.toLowerCase())
-                    .build()));
+        Map<String, List<String>> groups = Map.of(
+                "Thời trang", List.of("Thời trang nam", "Thời trang nữ", "Giày dép", "Túi xách", "Đồng hồ", "Trang sức"),
+                "Điện tử", List.of("Điện thoại", "Laptop", "Phụ kiện điện tử"),
+                "Nhà cửa và đời sống", List.of("Đồ gia dụng", "Nội thất", "Đồ dùng nhà bếp"),
+                "Sách và văn phòng phẩm", List.of("Sách", "Văn phòng phẩm"),
+                "Gia đình và sở thích", List.of("Mỹ phẩm", "Đồ chơi trẻ em", "Thể thao", "Mẹ và bé", "Thú cưng", "Thực phẩm")
+        );
+        for (var group : groups.entrySet()) {
+            Category parent = categoryRepository.save(Category.builder().name(group.getKey())
+                    .slug(slugify(group.getKey())).description("Danh mục " + group.getKey().toLowerCase()).build());
+            for (String name : group.getValue()) {
+                categories.add(categoryRepository.save(Category.builder()
+                        .name(name).slug(slugify(name)).description("Danh mục " + name.toLowerCase())
+                        .parent(parent).build()));
+            }
         }
         return categories;
     }
