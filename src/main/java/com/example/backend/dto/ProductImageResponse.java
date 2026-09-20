@@ -1,6 +1,6 @@
 package com.example.backend.dto;
 
-import com.example.backend.entity.ProductImage;
+import com.example.backend.entity.ProductImage; // ProductImage (entity ánh xạ dữ liệu với bảng database).
 
 // DTO phản hồi chi tiết hình ảnh sản phẩm sau khi lưu
 public record ProductImageResponse(Long id, String url, boolean isPrimary, Integer sortOrder) {

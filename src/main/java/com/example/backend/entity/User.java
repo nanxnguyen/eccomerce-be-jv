@@ -1,22 +1,22 @@
 package com.example.backend.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import jakarta.persistence.Column; // annotation/API JPA để ánh xạ entity với database (Column).
+import jakarta.persistence.Entity; // annotation/API JPA để ánh xạ entity với database (Entity).
+import jakarta.persistence.EnumType; // annotation/API JPA để ánh xạ entity với database (EnumType).
+import jakarta.persistence.Enumerated; // annotation/API JPA để ánh xạ entity với database (Enumerated).
+import jakarta.persistence.GeneratedValue; // annotation/API JPA để ánh xạ entity với database (GeneratedValue).
+import jakarta.persistence.GenerationType; // annotation/API JPA để ánh xạ entity với database (GenerationType).
+import jakarta.persistence.Id; // annotation/API JPA để ánh xạ entity với database (Id).
+import jakarta.persistence.Table; // annotation/API JPA để ánh xạ entity với database (Table).
+import lombok.AllArgsConstructor; // Lombok tự sinh mã Java lặp lại lúc biên dịch (AllArgsConstructor).
+import lombok.Builder; // Lombok tự sinh mã Java lặp lại lúc biên dịch (Builder).
+import lombok.Getter; // Lombok tự sinh mã Java lặp lại lúc biên dịch (Getter).
+import lombok.NoArgsConstructor; // Lombok tự sinh mã Java lặp lại lúc biên dịch (NoArgsConstructor).
+import lombok.Setter; // Lombok tự sinh mã Java lặp lại lúc biên dịch (Setter).
+import org.hibernate.annotations.CreationTimestamp; // tính năng Hibernate/JPA cho database (CreationTimestamp).
+import org.hibernate.annotations.UpdateTimestamp; // tính năng Hibernate/JPA cho database (UpdateTimestamp).
 
-import java.time.Instant;
+import java.time.Instant; // kiểu/thao tác thời gian chuẩn Java (Instant).
 
 /**
  * Lớp đại diện cho bảng 'users' trong cơ sở dữ liệu.
@@ -44,8 +44,11 @@ public class User {
     private String email;
 
     // Lưu trữ mật khẩu dưới dạng hash (BCrypt), không bao giờ lưu mật khẩu plain text
-    @Column(nullable = false)
+    @Column
     private String passwordHash;
+
+    @Column(name = "keycloak_subject", unique = true, length = 255)
+    private String keycloakSubject;
 
     private String phone;
 

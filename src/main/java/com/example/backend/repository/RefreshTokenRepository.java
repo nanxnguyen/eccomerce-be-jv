@@ -1,13 +1,13 @@
 package com.example.backend.repository;
 
-import com.example.backend.entity.RefreshToken;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import com.example.backend.entity.RefreshToken; // RefreshToken (entity ánh xạ dữ liệu với bảng database).
+import org.springframework.data.jpa.repository.JpaRepository; // kiểu Spring Data hỗ trợ truy cập/phân trang database (JpaRepository).
+import org.springframework.data.jpa.repository.Modifying; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Modifying).
+import org.springframework.data.jpa.repository.Query; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Query).
+import org.springframework.data.repository.query.Param; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Param).
 
-import java.time.Instant;
-import java.util.Optional;
+import java.time.Instant; // kiểu/thao tác thời gian chuẩn Java (Instant).
+import java.util.Optional; // biểu diễn kết quả có thể không tồn tại.
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 

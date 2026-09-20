@@ -1,25 +1,25 @@
 package com.example.backend.config;
 
-import com.example.backend.entity.Category;
-import com.example.backend.entity.Product;
-import com.example.backend.entity.ProductImage;
-import com.example.backend.entity.ProductStatus;
-import com.example.backend.entity.ProductVariant;
-import com.example.backend.entity.Role;
-import com.example.backend.entity.User;
-import com.example.backend.repository.CategoryRepository;
-import com.example.backend.repository.ProductRepository;
-import com.example.backend.repository.UserRepository;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
+import com.example.backend.entity.Category; // Category (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.Product; // Product (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.ProductImage; // ProductImage (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.ProductStatus; // ProductStatus (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.ProductVariant; // ProductVariant (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.Role; // Role (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.repository.CategoryRepository; // CategoryRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import com.example.backend.repository.ProductRepository; // ProductRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import com.example.backend.repository.UserRepository; // UserRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import org.springframework.boot.CommandLineRunner; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (CommandLineRunner).
+import org.springframework.context.annotation.Profile; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Profile).
+import org.springframework.security.crypto.password.PasswordEncoder; // thành phần Spring Security cho xác thực/phân quyền (PasswordEncoder).
+import org.springframework.stereotype.Component; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Component).
 
-import java.math.BigDecimal;
-import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal; // tính tiền chính xác, tránh sai số số thực.
+import java.text.Normalizer; // thư viện/kiểu Normalizer được dùng trong file này.
+import java.util.ArrayList; // danh sách có thể thêm phần tử.
+import java.util.List; // danh sách phần tử cùng kiểu.
+import java.util.Map; // bản đồ khóa–giá trị.
 
 // Chèn data mẫu (10 user, 20 category, 50 product + variant/image) để có data thật thao tác,
 // khỏi tạo tay qua API/pgAdmin từng dòng. CHỈ chạy khi bật profile "seed"

@@ -1,27 +1,31 @@
 package com.example.backend.config;
 
-import com.example.backend.security.JwtAuthFilter;
-import com.example.backend.logging.HttpExchangeLoggingFilter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.example.backend.security.JwtAuthFilter; // JwtAuthFilter (thành phần xác thực/phân quyền).
+import com.example.backend.logging.HttpExchangeLoggingFilter; // HttpExchangeLoggingFilter (thành phần ghi log request/response).
+import com.example.backend.security.KeycloakJwtAuthenticationConverter; // KeycloakJwtAuthenticationConverter (thành phần xác thực/phân quyền).
+import org.springframework.beans.factory.ObjectProvider; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (ObjectProvider).
+import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
+import org.springframework.context.annotation.Bean; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Bean).
+import org.springframework.context.annotation.Configuration; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Configuration).
+import org.springframework.http.HttpMethod; // kiểu HTTP như status, header hoặc response body (HttpMethod).
+import org.springframework.http.HttpStatus; // kiểu HTTP như status, header hoặc response body (HttpStatus).
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // thành phần Spring Security cho xác thực/phân quyền (EnableMethodSecurity).
+import org.springframework.security.config.annotation.web.builders.HttpSecurity; // thành phần Spring Security cho xác thực/phân quyền (HttpSecurity).
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity; // thành phần Spring Security cho xác thực/phân quyền (EnableWebSecurity).
+import org.springframework.security.config.http.SessionCreationPolicy; // thành phần Spring Security cho xác thực/phân quyền (SessionCreationPolicy).
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // thành phần Spring Security cho xác thực/phân quyền (BCryptPasswordEncoder).
+import org.springframework.security.crypto.password.PasswordEncoder; // thành phần Spring Security cho xác thực/phân quyền (PasswordEncoder).
+import org.springframework.security.web.SecurityFilterChain; // thành phần Spring Security cho xác thực/phân quyền (SecurityFilterChain).
+import org.springframework.security.web.authentication.HttpStatusEntryPoint; // thành phần Spring Security cho xác thực/phân quyền (HttpStatusEntryPoint).
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // thành phần Spring Security cho xác thực/phân quyền (UsernamePasswordAuthenticationFilter).
+import org.springframework.boot.web.servlet.FilterRegistrationBean; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (FilterRegistrationBean).
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver; // thành phần Spring Security cho xác thực/phân quyền (BearerTokenResolver).
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter; // thành phần Spring Security cho xác thực/phân quyền (BearerTokenAuthenticationFilter).
+import org.springframework.web.cors.CorsConfiguration; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (CorsConfiguration).
+import org.springframework.web.cors.CorsConfigurationSource; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (CorsConfigurationSource).
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (UrlBasedCorsConfigurationSource).
 
-import java.util.List;
+import java.util.List; // danh sách phần tử cùng kiểu.
 
 /**
  * Cấu hình trung tâm cho Spring Security: quy tắc phân quyền theo endpoint, cách xác thực,
@@ -39,6 +43,9 @@ public class SecurityConfig {
     // Comma-separated, đọc từ app.cors.allowed-origins (application.properties/application-prod.properties).
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
+
+    @Value("${app.keycloak.enabled:false}")
+    private boolean keycloakEnabled;
 
     // BCrypt: thuật toán hash mật khẩu một chiều (không thể giải mã ngược), có "salt" ngẫu nhiên
     // tự động nên cùng 1 mật khẩu hash 2 lần ra 2 chuỗi khác nhau -> chống rainbow-table attack.
@@ -73,7 +80,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter,
-                                                   HttpExchangeLoggingFilter httpExchangeLoggingFilter) throws Exception {
+                                                   HttpExchangeLoggingFilter httpExchangeLoggingFilter,
+                                                   KeycloakJwtAuthenticationConverter keycloakConverter,
+                                                   ObjectProvider<BearerTokenResolver> bearerTokenResolver) throws Exception {
         http
                 // CSRF (Cross-Site Request Forgery) là rủi ro của app dùng session cookie: browser tự
                 // động gửi kèm cookie trong mọi request, kể cả request giả mạo từ site khác, nên cần
@@ -117,7 +126,13 @@ public class SecurityConfig {
                 // form-login mặc định của Spring Security) để SecurityContext có Authentication từ JWT
                 // sớm nhất có thể, trước khi các bước authorization phía sau kiểm tra quyền truy cập.
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(httpExchangeLoggingFilter, JwtAuthFilter.class);
+                .addFilterAfter(httpExchangeLoggingFilter, BearerTokenAuthenticationFilter.class);
+
+        if (keycloakEnabled) {
+            http.oauth2ResourceServer(oauth2 -> oauth2
+                    .bearerTokenResolver(bearerTokenResolver.getObject())
+                    .jwt(jwt -> jwt.jwtAuthenticationConverter(keycloakConverter)));
+        }
 
         return http.build();
     }

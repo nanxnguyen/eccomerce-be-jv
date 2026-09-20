@@ -1,6 +1,6 @@
 package com.example.backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank; // annotation/API kiểm tra dữ liệu đầu vào (NotBlank).
 
 /**
  * Body dùng chung cho POST /api/auth/refresh và POST /api/auth/logout - cả 2 đều xác định

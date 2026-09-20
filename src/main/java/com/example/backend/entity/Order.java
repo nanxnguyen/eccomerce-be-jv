@@ -1,31 +1,31 @@
 package com.example.backend.entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import jakarta.persistence.CascadeType; // annotation/API JPA để ánh xạ entity với database (CascadeType).
+import jakarta.persistence.Column; // annotation/API JPA để ánh xạ entity với database (Column).
+import jakarta.persistence.Entity; // annotation/API JPA để ánh xạ entity với database (Entity).
+import jakarta.persistence.EnumType; // annotation/API JPA để ánh xạ entity với database (EnumType).
+import jakarta.persistence.Enumerated; // annotation/API JPA để ánh xạ entity với database (Enumerated).
+import jakarta.persistence.FetchType; // annotation/API JPA để ánh xạ entity với database (FetchType).
+import jakarta.persistence.GeneratedValue; // annotation/API JPA để ánh xạ entity với database (GeneratedValue).
+import jakarta.persistence.GenerationType; // annotation/API JPA để ánh xạ entity với database (GenerationType).
+import jakarta.persistence.Id; // annotation/API JPA để ánh xạ entity với database (Id).
+import jakarta.persistence.JoinColumn; // annotation/API JPA để ánh xạ entity với database (JoinColumn).
+import jakarta.persistence.ManyToOne; // annotation/API JPA để ánh xạ entity với database (ManyToOne).
+import jakarta.persistence.OneToMany; // annotation/API JPA để ánh xạ entity với database (OneToMany).
+import jakarta.persistence.OneToOne; // annotation/API JPA để ánh xạ entity với database (OneToOne).
+import jakarta.persistence.Table; // annotation/API JPA để ánh xạ entity với database (Table).
+import lombok.AllArgsConstructor; // Lombok tự sinh mã Java lặp lại lúc biên dịch (AllArgsConstructor).
+import lombok.Builder; // Lombok tự sinh mã Java lặp lại lúc biên dịch (Builder).
+import lombok.Getter; // Lombok tự sinh mã Java lặp lại lúc biên dịch (Getter).
+import lombok.NoArgsConstructor; // Lombok tự sinh mã Java lặp lại lúc biên dịch (NoArgsConstructor).
+import lombok.Setter; // Lombok tự sinh mã Java lặp lại lúc biên dịch (Setter).
+import org.hibernate.annotations.CreationTimestamp; // tính năng Hibernate/JPA cho database (CreationTimestamp).
+import org.hibernate.annotations.UpdateTimestamp; // tính năng Hibernate/JPA cho database (UpdateTimestamp).
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.math.BigDecimal; // tính tiền chính xác, tránh sai số số thực.
+import java.time.Instant; // kiểu/thao tác thời gian chuẩn Java (Instant).
+import java.util.ArrayList; // danh sách có thể thêm phần tử.
+import java.util.List; // danh sách phần tử cùng kiểu.
 
 @Entity
 @Table(name = "orders")
@@ -36,18 +36,22 @@ import java.util.List;
 @Builder
 public class Order {
 
+    // Khóa chính; database cấp số khi Hibernate INSERT đơn mới.
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // user_id là khóa ngoại chỉ khách đã đặt đơn.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    // Lưu enum theo tên chữ (ví dụ CONFIRMED), không theo số thứ tự.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status;
 
+    // Phương thức thanh toán cũng được lưu theo tên enum.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentMethod paymentMethod;
@@ -81,9 +85,11 @@ public class Order {
     private Instant updatedAt;
 
     @Builder.Default
+    // Cascade lưu/xóa các order_items cùng Order; mappedBy cho biết OrderItem giữ cột order_id.
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
+    // Quan hệ 1-1; Payment giữ cột khóa ngoại order_id.
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Payment payment;
 
@@ -91,12 +97,16 @@ public class Order {
     // OrderItem/Payment - chỉ add vào list/field trong bộ nhớ KHÔNG đủ, phải set cả chiều ngược lại
     // để Hibernate lưu đúng khoá ngoại.
     public void addItem(OrderItem item) {
+        // Thêm dòng hàng vào danh sách mà response có thể đọc ngay.
         items.add(item);
+        // Gán phía giữ khóa ngoại để Hibernate biết order_id cần lưu.
         item.setOrder(this);
     }
 
     public void assignPayment(Payment payment) {
+        // Gắn payment vào Order trong bộ nhớ.
         this.payment = payment;
+        // Gán phía Payment giữ cột order_id trong database.
         payment.setOrder(this);
     }
 }

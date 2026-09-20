@@ -1,13 +1,15 @@
 package com.example.backend.repository;
 
-import com.example.backend.entity.Product;
-import com.example.backend.entity.ProductStatus;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.example.backend.entity.Product; // Product (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.ProductStatus; // ProductStatus (entity ánh xạ dữ liệu với bảng database).
+import org.springframework.data.domain.Page; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Page).
+import org.springframework.data.domain.Pageable; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Pageable).
+import org.springframework.data.jpa.repository.EntityGraph; // kiểu Spring Data hỗ trợ truy cập/phân trang database (EntityGraph).
+import org.springframework.data.jpa.repository.JpaRepository; // kiểu Spring Data hỗ trợ truy cập/phân trang database (JpaRepository).
+import org.springframework.data.jpa.repository.Query; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Query).
+import org.springframework.data.repository.query.Param; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Param).
 
-import java.util.Optional;
+import java.util.Optional; // biểu diễn kết quả có thể không tồn tại.
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findBySlug(String slug);
@@ -33,4 +35,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @EntityGraph(attributePaths = "category")
     Page<Product> findByStatusAndCategoryIdAndNameContainingIgnoreCase(ProductStatus status, Long categoryId, String name, Pageable pageable);
+
+    @EntityGraph(attributePaths = "category")
+    @Query("select p from Product p where (:status is null or p.status = :status) " +
+            "and (:categoryId is null or p.category.id = :categoryId) " +
+            "and (:search is null or lower(p.name) like lower(concat('%', :search, '%'))) ")
+    Page<Product> findAdminProducts(@Param("status") ProductStatus status,
+                                    @Param("categoryId") Long categoryId,
+                                    @Param("search") String search,
+                                    Pageable pageable);
 }

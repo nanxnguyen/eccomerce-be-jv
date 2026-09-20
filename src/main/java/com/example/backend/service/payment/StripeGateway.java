@@ -1,20 +1,20 @@
 package com.example.backend.service.payment;
 
-import com.example.backend.entity.Order;
-import com.example.backend.entity.PaymentMethod;
-import com.stripe.Stripe;
-import com.stripe.exception.SignatureVerificationException;
-import com.stripe.exception.StripeException;
-import com.stripe.model.Event;
-import com.stripe.model.PaymentIntent;
-import com.stripe.net.Webhook;
-import com.stripe.param.PaymentIntentCreateParams;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import com.example.backend.entity.Order; // Order (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.PaymentMethod; // PaymentMethod (entity ánh xạ dữ liệu với bảng database).
+import com.stripe.Stripe; // thư viện/kiểu Stripe được dùng trong file này.
+import com.stripe.exception.SignatureVerificationException; // thư viện/kiểu SignatureVerificationException được dùng trong file này.
+import com.stripe.exception.StripeException; // thư viện/kiểu StripeException được dùng trong file này.
+import com.stripe.model.Event; // thư viện/kiểu Event được dùng trong file này.
+import com.stripe.model.PaymentIntent; // thư viện/kiểu PaymentIntent được dùng trong file này.
+import com.stripe.net.Webhook; // thư viện/kiểu Webhook được dùng trong file này.
+import com.stripe.param.PaymentIntentCreateParams; // thư viện/kiểu PaymentIntentCreateParams được dùng trong file này.
+import jakarta.servlet.http.HttpServletRequest; // thông tin request/response HTTP của Servlet (HttpServletRequest).
+import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
+import org.springframework.stereotype.Component; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Component).
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.math.BigDecimal; // tính tiền chính xác, tránh sai số số thực.
+import java.math.RoundingMode; // tiện ích toán học chuẩn Java (RoundingMode).
 
 @Component
 public class StripeGateway implements PaymentGateway {

@@ -1,19 +1,19 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.CartItemAddRequest;
-import com.example.backend.dto.CartItemQuantityRequest;
-import com.example.backend.dto.CartResponse;
-import com.example.backend.entity.Cart;
-import com.example.backend.entity.CartItem;
-import com.example.backend.entity.ProductVariant;
-import com.example.backend.entity.User;
-import com.example.backend.exception.ResourceNotFoundException;
-import com.example.backend.repository.CartItemRepository;
-import com.example.backend.repository.CartRepository;
-import com.example.backend.repository.ProductVariantRepository;
-import com.example.backend.repository.UserRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.example.backend.dto.CartItemAddRequest; // CartItemAddRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.CartItemQuantityRequest; // CartItemQuantityRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.CartResponse; // CartResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.entity.Cart; // Cart (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.CartItem; // CartItem (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.ProductVariant; // ProductVariant (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.exception.ResourceNotFoundException; // ResourceNotFoundException (loại lỗi nghiệp vụ hoặc dữ liệu).
+import com.example.backend.repository.CartItemRepository; // CartItemRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import com.example.backend.repository.CartRepository; // CartRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import com.example.backend.repository.ProductVariantRepository; // ProductVariantRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import com.example.backend.repository.UserRepository; // UserRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
+import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
 
 @Service
 public class CartService {

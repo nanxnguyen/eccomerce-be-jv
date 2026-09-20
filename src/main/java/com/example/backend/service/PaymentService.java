@@ -1,17 +1,17 @@
 package com.example.backend.service;
 
-import com.example.backend.entity.Order;
-import com.example.backend.entity.PaymentMethod;
-import com.example.backend.service.payment.PaymentGateway;
-import com.example.backend.service.payment.PaymentInitResult;
-import com.example.backend.service.payment.PaymentWebhookResult;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.stereotype.Service;
+import com.example.backend.entity.Order; // Order (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.PaymentMethod; // PaymentMethod (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.service.payment.PaymentGateway; // PaymentGateway (payment).
+import com.example.backend.service.payment.PaymentInitResult; // PaymentInitResult (payment).
+import com.example.backend.service.payment.PaymentWebhookResult; // PaymentWebhookResult (payment).
+import jakarta.servlet.http.HttpServletRequest; // thông tin request/response HTTP của Servlet (HttpServletRequest).
+import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
 
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.List; // danh sách phần tử cùng kiểu.
+import java.util.Map; // bản đồ khóa–giá trị.
+import java.util.function.Function; // tiện ích collection chuẩn Java (Function).
+import java.util.stream.Collectors; // tiện ích collection chuẩn Java (Collectors).
 
 @Service
 public class PaymentService {
@@ -26,6 +26,7 @@ public class PaymentService {
     }
 
     public PaymentInitResult initiate(Order order) {
+        // Chọn adapter theo paymentMethod; gateway thực hiện bước ngoài hệ thống (tạo link/session).
         return gatewayOf(order.getPaymentMethod()).initiate(order);
     }
 
@@ -34,6 +35,7 @@ public class PaymentService {
     }
 
     private PaymentGateway gatewayOf(PaymentMethod method) {
+        // Các gateway đã được gom vào Map theo PaymentMethod lúc Spring khởi tạo service.
         PaymentGateway gateway = gateways.get(method);
         if (gateway == null) {
             throw new IllegalStateException("No PaymentGateway registered for " + method);

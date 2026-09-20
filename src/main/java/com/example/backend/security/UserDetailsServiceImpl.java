@@ -1,14 +1,14 @@
 package com.example.backend.security;
 
-import com.example.backend.entity.User;
-import com.example.backend.repository.UserRepository;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
+import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.repository.UserRepository; // UserRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import org.springframework.security.core.authority.SimpleGrantedAuthority; // thành phần Spring Security cho xác thực/phân quyền (SimpleGrantedAuthority).
+import org.springframework.security.core.userdetails.UserDetails; // thành phần Spring Security cho xác thực/phân quyền (UserDetails).
+import org.springframework.security.core.userdetails.UserDetailsService; // thành phần Spring Security cho xác thực/phân quyền (UserDetailsService).
+import org.springframework.security.core.userdetails.UsernameNotFoundException; // thành phần Spring Security cho xác thực/phân quyền (UsernameNotFoundException).
+import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
 
-import java.util.List;
+import java.util.List; // danh sách phần tử cùng kiểu.
 
 /**
  * Cầu nối giữa Spring Security và dữ liệu User của ứng dụng.

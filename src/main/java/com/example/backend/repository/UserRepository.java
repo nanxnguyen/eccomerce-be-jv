@@ -1,9 +1,10 @@
 package com.example.backend.repository;
 
-import com.example.backend.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.Role; // Role (entity ánh xạ dữ liệu với bảng database).
+import org.springframework.data.jpa.repository.JpaRepository; // kiểu Spring Data hỗ trợ truy cập/phân trang database (JpaRepository).
 
-import java.util.Optional;
+import java.util.Optional; // biểu diễn kết quả có thể không tồn tại.
 
 /**
  * Repository interface cho entity User.
@@ -13,9 +14,12 @@ import java.util.Optional;
  * Không cần viết @Query hoặc SQL thủ công - Spring Data làm hết.
  */
 public interface UserRepository extends JpaRepository<User, Long> {
-    // Tìm user theo email, trả về Optional (có thể không tìm thấy)
+    // OrderService dùng email từ token để xác định chủ của request checkout.
+    // Spring Data tạo SELECT theo tên findByEmail; Optional biểu diễn trường hợp không có kết quả.
     Optional<User> findByEmail(String email);
+    Optional<User> findByKeycloakSubject(String keycloakSubject);
 
     // Kiểm tra email có tồn tại không (trả về true/false)
     boolean existsByEmail(String email);
+    java.util.List<User> findAllByRole(Role role);
 }

@@ -1,22 +1,22 @@
 package com.example.backend.controller;
 
-import com.example.backend.dto.AuthResponse;
-import com.example.backend.dto.LoginRequest;
-import com.example.backend.dto.RefreshTokenRequest;
-import com.example.backend.dto.RegisterRequest;
-import com.example.backend.security.LoginRateLimiter;
-import com.example.backend.service.AuthService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.backend.dto.AuthResponse; // AuthResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.LoginRequest; // LoginRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.RefreshTokenRequest; // RefreshTokenRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.RegisterRequest; // RegisterRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.security.LoginRateLimiter; // LoginRateLimiter (thành phần xác thực/phân quyền).
+import com.example.backend.service.AuthService; // AuthService (service xử lý nghiệp vụ).
+import jakarta.servlet.http.HttpServletRequest; // thông tin request/response HTTP của Servlet (HttpServletRequest).
+import jakarta.validation.Valid; // annotation/API kiểm tra dữ liệu đầu vào (Valid).
+import org.springframework.http.HttpStatus; // kiểu HTTP như status, header hoặc response body (HttpStatus).
+import org.springframework.http.ResponseEntity; // kiểu HTTP như status, header hoặc response body (ResponseEntity).
+import org.springframework.security.authentication.BadCredentialsException; // thành phần Spring Security cho xác thực/phân quyền (BadCredentialsException).
+import org.springframework.security.core.annotation.AuthenticationPrincipal; // thành phần Spring Security cho xác thực/phân quyền (AuthenticationPrincipal).
+import org.springframework.security.core.userdetails.UserDetails; // thành phần Spring Security cho xác thực/phân quyền (UserDetails).
+import org.springframework.web.bind.annotation.PostMapping; // annotation Spring MVC để khai báo route/đọc request (PostMapping).
+import org.springframework.web.bind.annotation.RequestBody; // annotation Spring MVC để khai báo route/đọc request (RequestBody).
+import org.springframework.web.bind.annotation.RequestMapping; // annotation Spring MVC để khai báo route/đọc request (RequestMapping).
+import org.springframework.web.bind.annotation.RestController; // annotation Spring MVC để khai báo route/đọc request (RestController).
 
 @RestController
 @RequestMapping("/api/auth")

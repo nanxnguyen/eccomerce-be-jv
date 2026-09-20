@@ -1,8 +1,8 @@
 package com.example.backend.scheduler;
 
-import com.example.backend.service.AuthService;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import com.example.backend.service.AuthService; // AuthService (service xử lý nghiệp vụ).
+import org.springframework.scheduling.annotation.Scheduled; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Scheduled).
+import org.springframework.stereotype.Component; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Component).
 
 // @EnableScheduling đã bật ở BackendApplication. fixedRate=1h: bảng refresh_tokens lớn dần chậm
 // (1 row/lần rotate), không cần quét thường xuyên như OrderExpiryScheduler.

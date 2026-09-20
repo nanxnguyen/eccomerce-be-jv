@@ -1,6 +1,6 @@
 package com.example.backend.exception;
 
-import java.time.Instant;
+import java.time.Instant; // kiểu/thao tác thời gian chuẩn Java (Instant).
 
 // Cấu trúc JSON thống nhất được trả về khi có lỗi.
 // - timestamp: thời điểm lỗi xảy ra

@@ -1,12 +1,12 @@
 package com.example.backend.config;
 
-import io.swagger.v3.oas.models.Components;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.security.SecurityRequirement;
-import io.swagger.v3.oas.models.security.SecurityScheme;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import io.swagger.v3.oas.models.Components; // thư viện/kiểu Components được dùng trong file này.
+import io.swagger.v3.oas.models.OpenAPI; // thư viện/kiểu OpenAPI được dùng trong file này.
+import io.swagger.v3.oas.models.info.Info; // thư viện/kiểu Info được dùng trong file này.
+import io.swagger.v3.oas.models.security.SecurityRequirement; // thư viện/kiểu SecurityRequirement được dùng trong file này.
+import io.swagger.v3.oas.models.security.SecurityScheme; // thư viện/kiểu SecurityScheme được dùng trong file này.
+import org.springframework.context.annotation.Bean; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Bean).
+import org.springframework.context.annotation.Configuration; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Configuration).
 
 @Configuration
 public class OpenApiConfig {

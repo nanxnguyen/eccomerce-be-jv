@@ -1,24 +1,24 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.ProductImageRequest;
-import com.example.backend.dto.ProductRequest;
-import com.example.backend.dto.ProductResponse;
-import com.example.backend.dto.ProductSummaryResponse;
-import com.example.backend.dto.ProductVariantRequest;
-import com.example.backend.entity.Category;
-import com.example.backend.entity.Product;
-import com.example.backend.entity.ProductImage;
-import com.example.backend.entity.ProductStatus;
-import com.example.backend.entity.ProductVariant;
-import com.example.backend.exception.DuplicateResourceException;
-import com.example.backend.exception.ResourceNotFoundException;
-import com.example.backend.repository.CategoryRepository;
-import com.example.backend.repository.ProductRepository;
-import com.example.backend.repository.ProductVariantRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.example.backend.dto.ProductImageRequest; // ProductImageRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.ProductRequest; // ProductRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.ProductResponse; // ProductResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.ProductSummaryResponse; // ProductSummaryResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.ProductVariantRequest; // ProductVariantRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.entity.Category; // Category (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.Product; // Product (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.ProductImage; // ProductImage (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.ProductStatus; // ProductStatus (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.ProductVariant; // ProductVariant (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.exception.DuplicateResourceException; // DuplicateResourceException (loại lỗi nghiệp vụ hoặc dữ liệu).
+import com.example.backend.exception.ResourceNotFoundException; // ResourceNotFoundException (loại lỗi nghiệp vụ hoặc dữ liệu).
+import com.example.backend.repository.CategoryRepository; // CategoryRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import com.example.backend.repository.ProductRepository; // ProductRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import com.example.backend.repository.ProductVariantRepository; // ProductVariantRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import org.springframework.data.domain.Page; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Page).
+import org.springframework.data.domain.Pageable; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Pageable).
+import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
+import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
 
 @Service
 public class ProductService {
@@ -60,6 +60,20 @@ public class ProductService {
         // ProductSummaryResponse (không có variants/images) thay vì ProductResponse đầy đủ: xem
         // giải thích N+1 ở @EntityGraph trong ProductRepository và ở chính DTO này.
         return page.map(ProductSummaryResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProductSummaryResponse> listAdmin(ProductStatus status, Long categoryId, String search, Pageable pageable) {
+        String normalizedSearch = search == null || search.isBlank() ? null : search.trim();
+        return productRepository.findAdminProducts(status, categoryId, normalizedSearch, pageable)
+                .map(ProductSummaryResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductResponse getByIdAdmin(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        return ProductResponse.from(product);
     }
 
     // Endpoint public, ai cũng gọi được (không cần token) - phải lọc status = ACTIVE giống list().

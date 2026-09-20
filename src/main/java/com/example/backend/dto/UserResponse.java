@@ -1,7 +1,7 @@
 package com.example.backend.dto;
 
-import com.example.backend.entity.Role;
-import com.example.backend.entity.User;
+import com.example.backend.entity.Role; // Role (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
 
 /**
  * DTO chứa thông tin user mà server trả về khi client request lấy thông tin tài khoản.

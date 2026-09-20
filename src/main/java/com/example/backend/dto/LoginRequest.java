@@ -1,7 +1,7 @@
 package com.example.backend.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Email; // annotation/API kiểm tra dữ liệu đầu vào (Email).
+import jakarta.validation.constraints.NotBlank; // annotation/API kiểm tra dữ liệu đầu vào (NotBlank).
 
 /**
  * DTO chứa dữ liệu client gửi lên khi đăng nhập.

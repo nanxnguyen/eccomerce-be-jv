@@ -7,6 +7,9 @@ import com.example.backend.repository.CategoryRepository;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.ProductRepository;
 import com.example.backend.repository.RefreshTokenRepository;
+import com.example.backend.repository.NotificationRepository;
+import com.example.backend.repository.NotificationOutboxRepository;
+import com.example.backend.repository.LowStockAlertStateRepository;
 import com.example.backend.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +30,9 @@ public class TestDataCleaner {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final NotificationRepository notificationRepository;
+    private final NotificationOutboxRepository notificationOutboxRepository;
+    private final LowStockAlertStateRepository lowStockAlertStateRepository;
 
     public TestDataCleaner(OrderRepository orderRepository,
                             CartItemRepository cartItemRepository,
@@ -35,7 +41,10 @@ public class TestDataCleaner {
                             ProductRepository productRepository,
                             UserRepository userRepository,
                             CategoryRepository categoryRepository,
-                            RefreshTokenRepository refreshTokenRepository) {
+                            RefreshTokenRepository refreshTokenRepository,
+                            NotificationRepository notificationRepository,
+                            NotificationOutboxRepository notificationOutboxRepository,
+                            LowStockAlertStateRepository lowStockAlertStateRepository) {
         this.orderRepository = orderRepository;
         this.cartItemRepository = cartItemRepository;
         this.cartRepository = cartRepository;
@@ -44,9 +53,15 @@ public class TestDataCleaner {
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.notificationRepository = notificationRepository;
+        this.notificationOutboxRepository = notificationOutboxRepository;
+        this.lowStockAlertStateRepository = lowStockAlertStateRepository;
     }
 
     public void cleanAll() {
+        notificationRepository.deleteAll();
+        notificationOutboxRepository.deleteAll();
+        lowStockAlertStateRepository.deleteAll();
         // orders TRƯỚC cart_items/products: order_items.variant_id FK vào product_variants,
         // orders.user_id FK vào users - xoá products/users trước sẽ vi phạm ràng buộc FK nếu còn
         // order nào tham chiếu tới (cascade ALL trên Order.items/payment tự xoá order_items/payments

@@ -1,33 +1,33 @@
 package com.example.backend.logging;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.WriteListener;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpServletResponseWrapper;
-import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.ContentCachingRequestWrapper;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ObjectNode;
-import tools.jackson.databind.node.StringNode;
+import jakarta.servlet.FilterChain; // thông tin request/response HTTP của Servlet (FilterChain).
+import jakarta.servlet.ServletException; // thông tin request/response HTTP của Servlet (ServletException).
+import jakarta.servlet.ServletOutputStream; // thông tin request/response HTTP của Servlet (ServletOutputStream).
+import jakarta.servlet.WriteListener; // thông tin request/response HTTP của Servlet (WriteListener).
+import jakarta.servlet.http.HttpServletRequest; // thông tin request/response HTTP của Servlet (HttpServletRequest).
+import jakarta.servlet.http.HttpServletResponse; // thông tin request/response HTTP của Servlet (HttpServletResponse).
+import jakarta.servlet.http.HttpServletResponseWrapper; // thông tin request/response HTTP của Servlet (HttpServletResponseWrapper).
+import org.jspecify.annotations.NonNull; // thư viện/kiểu NonNull được dùng trong file này.
+import org.slf4j.Logger; // API ghi log của ứng dụng (Logger).
+import org.slf4j.LoggerFactory; // API ghi log của ứng dụng (LoggerFactory).
+import org.springframework.security.core.Authentication; // thành phần Spring Security cho xác thực/phân quyền (Authentication).
+import org.springframework.security.core.context.SecurityContextHolder; // thành phần Spring Security cho xác thực/phân quyền (SecurityContextHolder).
+import org.springframework.stereotype.Component; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Component).
+import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
+import org.springframework.web.filter.OncePerRequestFilter; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (OncePerRequestFilter).
+import org.springframework.web.util.ContentCachingRequestWrapper; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (ContentCachingRequestWrapper).
+import tools.jackson.databind.JsonNode; // thư viện/kiểu JsonNode được dùng trong file này.
+import tools.jackson.databind.ObjectMapper; // thư viện/kiểu ObjectMapper được dùng trong file này.
+import tools.jackson.databind.node.ObjectNode; // thư viện/kiểu ObjectNode được dùng trong file này.
+import tools.jackson.databind.node.StringNode; // thư viện/kiểu StringNode được dùng trong file này.
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
-import java.util.Locale;
-import java.util.Set;
+import java.io.ByteArrayOutputStream; // thiết bị đọc/ghi dữ liệu chuẩn Java (ByteArrayOutputStream).
+import java.io.IOException; // thiết bị đọc/ghi dữ liệu chuẩn Java (IOException).
+import java.io.PrintWriter; // thiết bị đọc/ghi dữ liệu chuẩn Java (PrintWriter).
+import java.io.OutputStreamWriter; // thiết bị đọc/ghi dữ liệu chuẩn Java (OutputStreamWriter).
+import java.nio.charset.Charset; // thư viện/kiểu Charset được dùng trong file này.
+import java.util.Locale; // thiết lập quy tắc vùng/ngôn ngữ.
+import java.util.Set; // tập hợp không trùng phần tử.
 
 @Component
 public class HttpExchangeLoggingFilter extends OncePerRequestFilter {

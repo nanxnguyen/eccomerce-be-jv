@@ -1,16 +1,16 @@
 package com.example.backend.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import io.jsonwebtoken.Claims; // thư viện JWT tạo hoặc kiểm tra token (Claims).
+import io.jsonwebtoken.JwtException; // thư viện JWT tạo hoặc kiểm tra token (JwtException).
+import io.jsonwebtoken.Jwts; // thư viện JWT tạo hoặc kiểm tra token (Jwts).
+import io.jsonwebtoken.security.Keys; // thư viện JWT tạo hoặc kiểm tra token (Keys).
+import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
+import org.springframework.stereotype.Component; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Component).
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.UUID;
+import javax.crypto.SecretKey; // thư viện/kiểu SecretKey được dùng trong file này.
+import java.nio.charset.StandardCharsets; // thư viện/kiểu StandardCharsets được dùng trong file này.
+import java.util.Date; // tiện ích collection chuẩn Java (Date).
+import java.util.UUID; // tạo định danh ngẫu nhiên.
 
 /**
  * Dịch vụ JWT (JSON Web Token) - cung cấp access token được signed để xác thực người dùng.

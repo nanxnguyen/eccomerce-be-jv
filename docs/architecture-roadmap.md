@@ -363,3 +363,14 @@ The following should not be added yet:
 - Full event sourcing.
 
 Add them only when traffic, team ownership, deployment boundaries, or reliability requirements justify the operational cost.
+
+## 12. CMS reporting and notifications
+
+Canonical staff endpoints live under `/api/cms/**` and require `ROLE_ADMIN`:
+
+- `/api/cms/dashboard/summary` and `/api/cms/dashboard/revenue` provide paid revenue and order metrics. Revenue uses successful payments by `paidAt`, UTC, and `[from,to)` ranges (maximum 366 days).
+- `/api/cms/reports/sales`, `/products`, and `/inventory` provide paged reports; `/api/cms/reports/{sales|products|inventory}/export.xlsx` exports at most 50,000 rows.
+- `/api/cms/notifications` lists CMS new-order and low-stock alerts. Customer lifecycle notifications are recipient-scoped under `/api/notifications`.
+- Flyway V5 stores notifications and transactional email outbox rows. `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`, and `MAIL_MAX_ATTEMPTS` configure SMTP. Delivery stays disabled when `MAIL_HOST` is empty; the default `MAIL_FROM` is `nguyenanhnhut0101.99@gmail.com`.
+
+Email delivery is at-least-once: a process can stop after the SMTP server accepts a message and before the outbox row is marked sent. Do not use this channel for marketing campaigns or arbitrary recipients.

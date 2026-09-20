@@ -1,18 +1,18 @@
 package com.example.backend.security;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.jspecify.annotations.NonNull;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+import jakarta.servlet.FilterChain; // thông tin request/response HTTP của Servlet (FilterChain).
+import jakarta.servlet.ServletException; // thông tin request/response HTTP của Servlet (ServletException).
+import jakarta.servlet.http.HttpServletRequest; // thông tin request/response HTTP của Servlet (HttpServletRequest).
+import jakarta.servlet.http.HttpServletResponse; // thông tin request/response HTTP của Servlet (HttpServletResponse).
+import org.jspecify.annotations.NonNull; // thư viện/kiểu NonNull được dùng trong file này.
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken; // thành phần Spring Security cho xác thực/phân quyền (UsernamePasswordAuthenticationToken).
+import org.springframework.security.core.context.SecurityContextHolder; // thành phần Spring Security cho xác thực/phân quyền (SecurityContextHolder).
+import org.springframework.security.core.userdetails.UserDetails; // thành phần Spring Security cho xác thực/phân quyền (UserDetails).
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource; // thành phần Spring Security cho xác thực/phân quyền (WebAuthenticationDetailsSource).
+import org.springframework.stereotype.Component; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Component).
+import org.springframework.web.filter.OncePerRequestFilter; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (OncePerRequestFilter).
 
-import java.io.IOException;
+import java.io.IOException; // thiết bị đọc/ghi dữ liệu chuẩn Java (IOException).
 
 /**
  * Filter chạy trên MỖI request để kiểm tra JWT token trong header "Authorization: Bearer <token>".

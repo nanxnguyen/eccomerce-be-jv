@@ -1,16 +1,16 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.AddressRequest;
-import com.example.backend.dto.AddressResponse;
-import com.example.backend.entity.Address;
-import com.example.backend.entity.User;
-import com.example.backend.exception.ResourceNotFoundException;
-import com.example.backend.repository.AddressRepository;
-import com.example.backend.repository.UserRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.example.backend.dto.AddressRequest; // AddressRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.AddressResponse; // AddressResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.entity.Address; // Address (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.exception.ResourceNotFoundException; // ResourceNotFoundException (loại lỗi nghiệp vụ hoặc dữ liệu).
+import com.example.backend.repository.AddressRepository; // AddressRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import com.example.backend.repository.UserRepository; // UserRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
+import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
 
-import java.util.List;
+import java.util.List; // danh sách phần tử cùng kiểu.
 
 @Service
 public class AddressService {

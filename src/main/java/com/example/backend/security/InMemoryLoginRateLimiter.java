@@ -1,15 +1,15 @@
 package com.example.backend.security;
 
-import com.example.backend.exception.TooManyAttemptsException;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import com.example.backend.exception.TooManyAttemptsException; // TooManyAttemptsException (loại lỗi nghiệp vụ hoặc dữ liệu).
+import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (ConditionalOnProperty).
+import org.springframework.scheduling.annotation.Scheduled; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Scheduled).
+import org.springframework.stereotype.Component; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Component).
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.time.Duration; // kiểu/thao tác thời gian chuẩn Java (Duration).
+import java.time.Instant; // kiểu/thao tác thời gian chuẩn Java (Instant).
+import java.util.concurrent.ConcurrentHashMap; // tiện ích collection chuẩn Java (ConcurrentHashMap).
+import java.util.concurrent.atomic.AtomicInteger; // tiện ích collection chuẩn Java (AtomicInteger).
 
 // Chỉ dùng cho test (auth.login.rate-limiter=in-memory trong src/test/resources/application.properties)
 // - test không cần Redis thật để chạy. Production dùng RedisLoginRateLimiter (đếm nhất quán across

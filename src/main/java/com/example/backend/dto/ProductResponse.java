@@ -1,9 +1,9 @@
 package com.example.backend.dto;
 
-import com.example.backend.entity.Product;
+import com.example.backend.entity.Product; // Product (entity ánh xạ dữ liệu với bảng database).
 
-import java.time.Instant;
-import java.util.List;
+import java.time.Instant; // kiểu/thao tác thời gian chuẩn Java (Instant).
+import java.util.List; // danh sách phần tử cùng kiểu.
 
 // DTO phản hồi chi tiết sản phẩm với danh sách biến thể và hình ảnh.
 // Gồm variants/images để trang chi tiết sản phẩm có đầy đủ dữ liệu trong một API call.

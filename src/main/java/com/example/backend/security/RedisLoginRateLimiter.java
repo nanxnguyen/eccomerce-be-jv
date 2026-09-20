@@ -1,15 +1,15 @@
 package com.example.backend.security;
 
-import com.example.backend.exception.TooManyAttemptsException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Component;
+import com.example.backend.exception.TooManyAttemptsException; // TooManyAttemptsException (loại lỗi nghiệp vụ hoặc dữ liệu).
+import org.slf4j.Logger; // API ghi log của ứng dụng (Logger).
+import org.slf4j.LoggerFactory; // API ghi log của ứng dụng (LoggerFactory).
+import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (ConditionalOnProperty).
+import org.springframework.dao.DataAccessException; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (DataAccessException).
+import org.springframework.data.redis.core.StringRedisTemplate; // kiểu Spring Data hỗ trợ truy cập/phân trang database (StringRedisTemplate).
+import org.springframework.stereotype.Component; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Component).
 
-import java.time.Duration;
+import java.time.Duration; // kiểu/thao tác thời gian chuẩn Java (Duration).
 
 // Đếm số lần login sai theo IP trong Redis (INCR + EXPIRE) thay vì ConcurrentHashMap trong 1 JVM -
 // nhất quán khi chạy nhiều instance app cùng lúc (xem docs/architecture-roadmap.md §5.1). Key:

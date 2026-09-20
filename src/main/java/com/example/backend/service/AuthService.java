@@ -1,30 +1,30 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.AuthResponse;
-import com.example.backend.dto.LoginRequest;
-import com.example.backend.dto.RegisterRequest;
-import com.example.backend.dto.UserResponse;
-import com.example.backend.entity.RefreshToken;
-import com.example.backend.entity.Role;
-import com.example.backend.entity.User;
-import com.example.backend.exception.DuplicateResourceException;
-import com.example.backend.repository.RefreshTokenRepository;
-import com.example.backend.repository.UserRepository;
-import com.example.backend.security.JwtService;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.example.backend.dto.AuthResponse; // AuthResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.LoginRequest; // LoginRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.RegisterRequest; // RegisterRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.dto.UserResponse; // UserResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
+import com.example.backend.entity.RefreshToken; // RefreshToken (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.Role; // Role (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.exception.DuplicateResourceException; // DuplicateResourceException (loại lỗi nghiệp vụ hoặc dữ liệu).
+import com.example.backend.repository.RefreshTokenRepository; // RefreshTokenRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import com.example.backend.repository.UserRepository; // UserRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import com.example.backend.security.JwtService; // JwtService (thành phần xác thực/phân quyền).
+import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
+import org.springframework.security.authentication.BadCredentialsException; // thành phần Spring Security cho xác thực/phân quyền (BadCredentialsException).
+import org.springframework.security.crypto.password.PasswordEncoder; // thành phần Spring Security cho xác thực/phân quyền (PasswordEncoder).
+import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
+import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.Base64;
-import java.util.HexFormat;
-import java.util.UUID;
+import java.security.MessageDigest; // thư viện/kiểu MessageDigest được dùng trong file này.
+import java.security.NoSuchAlgorithmException; // thư viện/kiểu NoSuchAlgorithmException được dùng trong file này.
+import java.security.SecureRandom; // thư viện/kiểu SecureRandom được dùng trong file này.
+import java.nio.charset.StandardCharsets; // thư viện/kiểu StandardCharsets được dùng trong file này.
+import java.time.Instant; // kiểu/thao tác thời gian chuẩn Java (Instant).
+import java.util.Base64; // mã hóa/giải mã Base64.
+import java.util.HexFormat; // tiện ích collection chuẩn Java (HexFormat).
+import java.util.UUID; // tạo định danh ngẫu nhiên.
 
 @Service
 public class AuthService {
@@ -86,7 +86,7 @@ public class AuthService {
         // So khớp mật khẩu bằng passwordEncoder.matches(), KHÔNG bao giờ so sánh chuỗi (==, .equals())
         // vì passwordHash trong DB là chuỗi đã hash (BCrypt), không phải mật khẩu gốc - so sánh
         // chuỗi trực tiếp sẽ luôn sai. matches() tự hash lại mật khẩu vừa nhập bằng cùng salt rồi so sánh.
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BadCredentialsException("Invalid email or password");
         }
 

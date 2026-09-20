@@ -1,8 +1,8 @@
 package com.example.backend.dto;
 
-import com.example.backend.entity.ProductVariant;
+import com.example.backend.entity.ProductVariant; // ProductVariant (entity ánh xạ dữ liệu với bảng database).
 
-import java.math.BigDecimal;
+import java.math.BigDecimal; // tính tiền chính xác, tránh sai số số thực.
 
 // DTO phản hồi chi tiết biến thể sản phẩm sau khi lưu
 public record ProductVariantResponse(Long id, String sku, String size, String color, BigDecimal price, Integer stockQuantity) {

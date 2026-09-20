@@ -26,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -85,6 +86,20 @@ class AdminOrderControllerIT {
                         .content(checkoutBody))
                 .andReturn().getResponse().getContentAsString();
         Long orderId = objectMapper.readTree(response).get("id").asLong();
+
+        Instant now = Instant.now();
+        mockMvc.perform(get("/api/cms/orders").header("Authorization", "Bearer " + adminToken)
+                        .param("status", "CONFIRMED").param("paymentStatus", "SUCCESS")
+                        .param("paymentMethod", "COD").param("buyerEmail", "cust2@example.com")
+                        .param("from", now.minusSeconds(60).toString()).param("to", now.plusSeconds(60).toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(orderId));
+
+        mockMvc.perform(get("/api/cms/orders").header("Authorization", "Bearer " + adminToken)
+                        .param("buyerEmail", "other@example.com"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
 
         mockMvc.perform(get("/api/admin/orders").param("status", "CONFIRMED")
                         .header("Authorization", "Bearer " + adminToken))

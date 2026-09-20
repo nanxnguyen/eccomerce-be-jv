@@ -1,22 +1,22 @@
 package com.example.backend.service.payment;
 
-import com.example.backend.entity.Order;
-import com.example.backend.entity.PaymentMethod;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import com.example.backend.entity.Order; // Order (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.PaymentMethod; // PaymentMethod (entity ánh xạ dữ liệu với bảng database).
+import jakarta.servlet.http.HttpServletRequest; // thông tin request/response HTTP của Servlet (HttpServletRequest).
+import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
+import org.springframework.stereotype.Component; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Component).
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.TreeMap;
+import javax.crypto.Mac; // thư viện/kiểu Mac được dùng trong file này.
+import javax.crypto.spec.SecretKeySpec; // thư viện/kiểu SecretKeySpec được dùng trong file này.
+import java.math.BigDecimal; // tính tiền chính xác, tránh sai số số thực.
+import java.net.URLEncoder; // thư viện/kiểu URLEncoder được dùng trong file này.
+import java.nio.charset.StandardCharsets; // thư viện/kiểu StandardCharsets được dùng trong file này.
+import java.security.MessageDigest; // thư viện/kiểu MessageDigest được dùng trong file này.
+import java.time.ZonedDateTime; // kiểu/thao tác thời gian chuẩn Java (ZonedDateTime).
+import java.time.format.DateTimeFormatter; // kiểu/thao tác thời gian chuẩn Java (DateTimeFormatter).
+import java.util.Enumeration; // tiện ích collection chuẩn Java (Enumeration).
+import java.util.Map; // bản đồ khóa–giá trị.
+import java.util.TreeMap; // tiện ích collection chuẩn Java (TreeMap).
 
 // VNPay không có SDK Java chính thức - build query string + ký HMAC-SHA512 tay theo tài liệu của
 // VNPay (https://sandbox.vnpayment.vn/apis/docs/thanh-toan-pay/pay.html).

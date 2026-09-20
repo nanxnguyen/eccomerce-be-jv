@@ -1,22 +1,22 @@
 package com.example.backend.exception;
 
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.servlet.http.HttpServletRequest; // thông tin request/response HTTP của Servlet (HttpServletRequest).
+import org.springframework.dao.DataIntegrityViolationException; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (DataIntegrityViolationException).
+import org.springframework.http.HttpStatus; // kiểu HTTP như status, header hoặc response body (HttpStatus).
+import org.springframework.http.ResponseEntity; // kiểu HTTP như status, header hoặc response body (ResponseEntity).
+import org.springframework.http.converter.HttpMessageNotReadableException; // kiểu HTTP như status, header hoặc response body (HttpMessageNotReadableException).
+import org.springframework.security.access.AccessDeniedException; // thành phần Spring Security cho xác thực/phân quyền (AccessDeniedException).
+import org.springframework.security.authentication.BadCredentialsException; // thành phần Spring Security cho xác thực/phân quyền (BadCredentialsException).
+import org.springframework.web.bind.MethodArgumentNotValidException; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (MethodArgumentNotValidException).
+import org.springframework.web.bind.annotation.ExceptionHandler; // annotation Spring MVC để khai báo route/đọc request (ExceptionHandler).
+import org.springframework.web.bind.annotation.RestControllerAdvice; // annotation Spring MVC để khai báo route/đọc request (RestControllerAdvice).
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (MethodArgumentTypeMismatchException).
+import org.springframework.web.servlet.resource.NoResourceFoundException; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (NoResourceFoundException).
+import org.slf4j.Logger; // API ghi log của ứng dụng (Logger).
+import org.slf4j.LoggerFactory; // API ghi log của ứng dụng (LoggerFactory).
 
-import java.time.Instant;
-import java.util.stream.Collectors;
+import java.time.Instant; // kiểu/thao tác thời gian chuẩn Java (Instant).
+import java.util.stream.Collectors; // tiện ích collection chuẩn Java (Collectors).
 
 // @RestControllerAdvice cho phép này xử lý ngoại lệ toàn cầu từ tất cả các Controller.
 // Spring sẽ tự động bắt các ngoại lệ được ném từ request handler và gửi đến phương thức
@@ -30,6 +30,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRequest(InvalidRequestException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
     // 409 Conflict: Tài nguyên trùng lặp (ví dụ: slug đã tồn tại)
