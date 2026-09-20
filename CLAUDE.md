@@ -70,3 +70,25 @@ Every new source file (controller, service, repository, entity, dto, event, sche
 - Do not add comments that only restate the code (`// getter`, `// set name`).
 - **Style references:** `controller/OrderController`, `entity/Order`, `repository/RefreshTokenRepository`, `dto/UserResponse`, `service/OrderService`, `config/SecurityConfig`, `security/LoginRateLimiter`, `scheduler/OrderExpiryScheduler`, `event/OrderEventListener`. The recently added notification, CMS, low-stock and email-outbox files have no comments - do not copy them as a style reference.
 - This rule is about comments only; indentation still follows the file you are editing (see Code style).
+
+### Impact check before changing behavior
+
+For every new feature or bug fix, work out what it can break **before** editing, and verify **after**:
+
+1. **Find every consumer** of what you touch: callers, listeners of an event, queries reading a column, endpoints returning a DTO. Use `codegraph_impact` / `codegraph_callers` (index in `.codegraph/`) or grep. Do not rely on the one file you happen to have open.
+2. **Check the paths in this repo that share state:**
+   - Order/stock changes (`checkout`, `confirmPayment`, `expireOverdueOrders`, `cancel`, `advanceStatus`) must keep `stockQuantity`/`reservedQuantity` consistent, and they publish events that `NotificationService` turns into notifications, outbox emails and low-stock alerts. CMS dashboard/report/inventory queries read the same tables.
+   - Auth: both the legacy JWT path and the Keycloak path, and both admin surfaces (`/api/admin/orders`, `/api/cms/**`). `/api/auth/*` must keep working for legacy clients.
+   - Schema: an entity change needs a Flyway migration, a `TestDataCleaner` update, an H2-compatible test path, and a check of repository/aggregate queries and DTO mappers that use it.
+   - API contract: do not rename or remove existing paths, status codes or response fields unless asked (frontends depend on them); add fields instead.
+3. **Fix the root cause** at the shared place every caller goes through, not only the path named in the report.
+4. **Bug fix = regression test:** write a test that fails on the bug first, then make it pass.
+5. **Verify:** run the affected tests, then the full `./mvnw test`, before saying done. In the final report say which consumers you checked and what you could not cover (for example Postgres-only SQL that H2 tests skip, or real Keycloak/SMTP not exercised).
+
+### Follow proven practice
+
+Before designing anything non-trivial (payments, auth, inventory/concurrency, notifications, caching, API shape, security), look at how mature systems and official docs solve the same problem and adopt the established pattern instead of inventing one. Typical sources: official Spring Boot / Spring Security / Hibernate / Keycloak docs, Stripe's API docs (idempotency, webhook signature verification), OWASP guidance, well-known patterns (transactional outbox - already used here, pessimistic/optimistic locking, idempotent consumers).
+
+- **Verify library APIs against current docs** (Context7 MCP or the official site), not memory. This is Spring Boot 4.1 / Jackson 3 and older tutorials are often wrong.
+- **Take the pattern, not the machinery.** This is a monolith by design: no new infrastructure (message brokers, extra services) and no single-implementation interfaces/factories unless there is a concrete need (`docs/architecture-roadmap.md`).
+- When the choice is non-obvious, name the practice you followed in the code comment (Vietnamese, per Comments) or in your reply.
