@@ -1,19 +1,19 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.*; // * (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.entity.PaymentStatus; // PaymentStatus (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.exception.InvalidRequestException; // InvalidRequestException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.repository.OrderRepository; // OrderRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import java.time.DayOfWeek; // kiểu/thao tác thời gian chuẩn Java (DayOfWeek).
-import java.time.Instant; // kiểu/thao tác thời gian chuẩn Java (Instant).
-import java.time.LocalDate; // kiểu/thao tác thời gian chuẩn Java (LocalDate).
-import java.time.temporal.TemporalAdjusters; // kiểu/thao tác thời gian chuẩn Java (TemporalAdjusters).
-import java.util.HashMap; // bản đồ khóa–giá trị trong bộ nhớ.
-import java.util.List; // danh sách phần tử cùng kiểu.
-import java.util.Map; // bản đồ khóa–giá trị.
-import org.springframework.data.domain.*; // kiểu Spring Data hỗ trợ truy cập/phân trang database (*).
-import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
-import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
+import com.example.backend.dto.*;
+import com.example.backend.entity.PaymentStatus;
+import com.example.backend.exception.InvalidRequestException;
+import com.example.backend.repository.OrderRepository;
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.springframework.data.domain.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CmsReportService {
@@ -29,13 +29,14 @@ public class CmsReportService {
     this.dashboard = dashboard;
   }
 
+
   @Transactional(readOnly = true)
   public Page<CmsSalesReportRow> sales(
       Instant from, Instant to, String granularity, Pageable pageable) {
     DashboardDateRange range = range(from, to);
     if (!List.of("day", "week", "month").contains(granularity))
       throw new InvalidRequestException("granularity must be day, week, or month");
-    Map<SalesKey, CmsSalesReportRow> grouped = new HashMap<>();
+    Map<SalesKey, CmsSalesReportRow> grouped = new HashMap<>(); // Gom các dòng cùng kỳ, phương thức và trạng thái vào một nhóm.
     for (var row : orders.salesReport(PaymentStatus.SUCCESS, range.from(), range.to())) {
       LocalDate bucket =
           switch (granularity) {
@@ -45,7 +46,7 @@ public class CmsReportService {
             default -> row.getBucketDate();
           };
       SalesKey key = new SalesKey(bucket, row.getPaymentMethod(), row.getOrderStatus());
-      grouped.merge(
+      grouped.merge( // Cộng doanh thu và số đơn khi khóa nhóm đã tồn tại.
           key,
           new CmsSalesReportRow(
               bucket,
@@ -71,6 +72,7 @@ public class CmsReportService {
     return page(rows, pageable);
   }
 
+
   @Transactional(readOnly = true)
   public Page<CmsProductSalesReportRow> products(
       Instant from, Instant to, String sort, Pageable pageable) {
@@ -79,7 +81,7 @@ public class CmsReportService {
       throw new InvalidRequestException("sort must be units or revenue");
     if (pageable.getPageSize() > MAX_PAGE_SIZE)
       throw new InvalidRequestException("page size cannot exceed 100");
-    PageRequest bounded = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+    PageRequest bounded = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()); // Giữ số trang và kích thước trang trước khi truy vấn.
     var report =
         sort.equals("units")
             ? orders.productSalesByUnits(
@@ -92,12 +94,13 @@ public class CmsReportService {
                 r.getProductName(), r.getSku(), r.getUnitsSold(), r.getRevenue()));
   }
 
+
   @Transactional(readOnly = true)
   public Page<CmsInventoryItem> inventory(Long categoryId, Integer threshold, Pageable pageable) {
     return inventory.inventory(threshold, categoryId, pageable);
   }
 
-  private DashboardDateRange range(Instant from, Instant to) {
+    private DashboardDateRange range(Instant from, Instant to) {
     return dashboard.validatedRange(from, to);
   }
 
@@ -106,7 +109,7 @@ public class CmsReportService {
       com.example.backend.entity.PaymentMethod method,
       com.example.backend.entity.OrderStatus status) {}
 
-  private <T> Page<T> page(List<T> rows, Pageable pageable) {
+    private <T> Page<T> page(List<T> rows, Pageable pageable) {
     if (pageable.getPageSize() > MAX_PAGE_SIZE)
       throw new InvalidRequestException("page size cannot exceed 100");
     int start = (int) Math.min(pageable.getOffset(), rows.size()),

@@ -4,11 +4,13 @@ import com.example.backend.entity.Category;
 import com.example.backend.entity.Product;
 import com.example.backend.entity.ProductStatus;
 import com.example.backend.entity.ProductVariant;
+import com.example.backend.entity.InventoryMovementType;
 import com.example.backend.entity.Role;
 import com.example.backend.entity.User;
 import com.example.backend.repository.CategoryRepository;
 import com.example.backend.repository.ProductRepository;
 import com.example.backend.repository.ProductVariantRepository;
+import com.example.backend.service.InventoryMovementService;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.security.JwtService;
 import com.example.backend.support.TestDataCleaner;
@@ -34,6 +36,7 @@ class CmsInventoryControllerIT {
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private ProductVariantRepository productVariantRepository;
+    @Autowired private InventoryMovementService inventoryMovementService;
     @Autowired private JwtService jwtService;
     @Autowired private TestDataCleaner testDataCleaner;
 
@@ -75,5 +78,24 @@ class CmsInventoryControllerIT {
     @Test
     void lowStockListRequiresAdmin() throws Exception {
         mockMvc.perform(get("/api/cms/inventory/low-stock")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void movementHistoryShowsStockChangesForVariant() throws Exception {
+        Category category = categoryRepository.save(Category.builder().name("Tools").slug("tools").build());
+        Product product = productRepository.save(Product.builder().category(category).name("Hammer")
+                .slug("hammer").status(ProductStatus.ACTIVE).build());
+        ProductVariant variant = productVariantRepository.save(ProductVariant.builder().product(product)
+                .sku("HAMMER-LEDGER").price(new BigDecimal("5.00")).stockQuantity(8).reservedQuantity(0).build());
+        inventoryMovementService.record(variant, null, InventoryMovementType.OPENING_STOCK, 8, 0);
+
+        mockMvc.perform(get("/api/cms/inventory/variants/{id}/movements", variant.getId())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].sku").value("HAMMER-LEDGER"))
+                .andExpect(jsonPath("$.content[0].type").value("OPENING_STOCK"))
+                .andExpect(jsonPath("$.content[0].stockDelta").value(8))
+                .andExpect(jsonPath("$.content[0].reservedDelta").value(0));
     }
 }

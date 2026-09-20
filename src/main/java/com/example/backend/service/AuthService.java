@@ -1,30 +1,31 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.AuthResponse; // AuthResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.LoginRequest; // LoginRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.RegisterRequest; // RegisterRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.UserResponse; // UserResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.entity.RefreshToken; // RefreshToken (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.Role; // Role (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.exception.DuplicateResourceException; // DuplicateResourceException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.repository.RefreshTokenRepository; // RefreshTokenRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.UserRepository; // UserRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.security.JwtService; // JwtService (thành phần xác thực/phân quyền).
-import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
-import org.springframework.security.authentication.BadCredentialsException; // thành phần Spring Security cho xác thực/phân quyền (BadCredentialsException).
-import org.springframework.security.crypto.password.PasswordEncoder; // thành phần Spring Security cho xác thực/phân quyền (PasswordEncoder).
-import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
-import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.HexFormat;
+import java.util.UUID;
 
-import java.security.MessageDigest; // thư viện/kiểu MessageDigest được dùng trong file này.
-import java.security.NoSuchAlgorithmException; // thư viện/kiểu NoSuchAlgorithmException được dùng trong file này.
-import java.security.SecureRandom; // thư viện/kiểu SecureRandom được dùng trong file này.
-import java.nio.charset.StandardCharsets; // thư viện/kiểu StandardCharsets được dùng trong file này.
-import java.time.Instant; // kiểu/thao tác thời gian chuẩn Java (Instant).
-import java.util.Base64; // mã hóa/giải mã Base64.
-import java.util.HexFormat; // tiện ích collection chuẩn Java (HexFormat).
-import java.util.UUID; // tạo định danh ngẫu nhiên.
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.backend.dto.AuthResponse;
+import com.example.backend.dto.LoginRequest;
+import com.example.backend.dto.RegisterRequest;
+import com.example.backend.dto.UserResponse;
+import com.example.backend.entity.RefreshToken;
+import com.example.backend.entity.Role;
+import com.example.backend.entity.User;
+import com.example.backend.exception.DuplicateResourceException;
+import com.example.backend.repository.RefreshTokenRepository;
+import com.example.backend.repository.UserRepository;
+import com.example.backend.security.JwtService;
 
 @Service
 public class AuthService {
@@ -52,7 +53,7 @@ public class AuthService {
         this.refreshExpirationMs = refreshExpirationMs;
     }
 
-    public AuthResponse register(RegisterRequest request, String deviceId, String ip, String userAgent) {
+        public AuthResponse register(RegisterRequest request, String deviceId, String ip, String userAgent) {
         // Kiểm tra trùng email TRƯỚC khi hash mật khẩu/lưu DB - tránh tốn công hash (BCrypt cố tình
         // chậm để chống brute-force) cho một request chắc chắn sẽ bị từ chối.
         if (userRepository.existsByEmail(request.email())) {
@@ -76,7 +77,7 @@ public class AuthService {
         return issueNewSession(user, deviceId, ip, userAgent);
     }
 
-    public AuthResponse login(LoginRequest request, String deviceId, String ip, String userAgent) {
+        public AuthResponse login(LoginRequest request, String deviceId, String ip, String userAgent) {
         // Cố tình dùng CÙNG MỘT thông báo lỗi cho cả 2 trường hợp "không tìm thấy email" và
         // "sai mật khẩu". Nếu thông báo khác nhau, kẻ tấn công có thể dò ra được email nào đã
         // tồn tại trong hệ thống (user enumeration attack) chỉ bằng cách thử đăng nhập.
@@ -120,13 +121,13 @@ public class AuthService {
         return issueSession(stored.getUser(), stored.getSessionId(), deviceId, ip, userAgent);
     }
 
-    @Transactional
+        @Transactional
     public void logout(String rawRefreshToken) {
         refreshTokenRepository.findByTokenHash(hash(rawRefreshToken))
                 .ifPresent(t -> refreshTokenRepository.revokeSession(t.getSessionId(), Instant.now()));
     }
 
-    @Transactional
+        @Transactional
     public void logoutAll(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("Invalid user"));
@@ -140,22 +141,22 @@ public class AuthService {
         refreshTokenRepository.deleteExpired(Instant.now());
     }
 
-    private AuthResponse issueNewSession(User user, String deviceId, String ip, String userAgent) {
+        private AuthResponse issueNewSession(User user, String deviceId, String ip, String userAgent) {
         return issueSession(user, UUID.randomUUID().toString(), deviceId, ip, userAgent);
     }
 
-    private AuthResponse issueSession(User user, String sessionId, String deviceId, String ip, String userAgent) {
-        String accessToken = jwtService.generateToken(user.getId(), user.getRole().name());
+        private AuthResponse issueSession(User user, String sessionId, String deviceId, String ip, String userAgent) {
+        String accessToken = jwtService.generateToken(user.getId(), user.getRole().name()); // Tạo access token dùng để gọi API.
 
-        String rawRefreshToken = randomToken();
+        String rawRefreshToken = randomToken(); // Tạo refresh token mới và chỉ trả bản thô cho client.
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
-                .tokenHash(hash(rawRefreshToken))
-                .sessionId(sessionId)
-                .deviceId(deviceId)
-                .ipAddress(ip)
-                .userAgent(userAgent)
-                .expiresAt(Instant.now().plusMillis(refreshExpirationMs))
+                .tokenHash(hash(rawRefreshToken)) // Lưu hash để không cất refresh token thô trong database.
+                .sessionId(sessionId) // Dùng để thu hồi mọi refresh token thuộc cùng phiên.
+                .deviceId(deviceId) // Lưu ID thiết bị đăng nhập.
+                .ipAddress(ip) // Lưu IP lúc đăng nhập.
+                .userAgent(userAgent) // Lưu thông tin trình duyệt hoặc ứng dụng.
+                .expiresAt(Instant.now().plusMillis(refreshExpirationMs)) // Đặt thời hạn sử dụng refresh token.
                 .build();
         refreshTokenRepository.save(refreshToken);
 
@@ -169,7 +170,7 @@ public class AuthService {
         );
     }
 
-    private static String randomToken() {
+        private static String randomToken() {
         byte[] bytes = new byte[32];
         SECURE_RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);

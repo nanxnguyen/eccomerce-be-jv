@@ -1,4 +1,4 @@
-package com.example.backend.controller;
+package com.example.backend.controller.publicapi;
 
 import com.example.backend.dto.CartItemAddRequest; // CartItemAddRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.dto.CartItemQuantityRequest; // CartItemQuantityRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).

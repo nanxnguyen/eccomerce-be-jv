@@ -1,19 +1,19 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.CategoryRequest; // CategoryRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.CategoryResponse; // CategoryResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.entity.Category; // Category (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.exception.DuplicateResourceException; // DuplicateResourceException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.exception.ResourceNotFoundException; // ResourceNotFoundException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.repository.CategoryRepository; // CategoryRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.ProductRepository; // ProductRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
-import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
+import com.example.backend.dto.CategoryRequest;
+import com.example.backend.dto.CategoryResponse;
+import com.example.backend.entity.Category;
+import com.example.backend.exception.DuplicateResourceException;
+import com.example.backend.exception.ResourceNotFoundException;
+import com.example.backend.repository.CategoryRepository;
+import com.example.backend.repository.ProductRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List; // danh sách phần tử cùng kiểu.
-import java.util.Map; // bản đồ khóa–giá trị.
-import java.util.ArrayList; // danh sách có thể thêm phần tử.
-import java.util.stream.Collectors; // tiện ích collection chuẩn Java (Collectors).
+import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @Service
 public class CategoryService {
@@ -26,17 +26,17 @@ public class CategoryService {
         this.productRepository = productRepository;
     }
 
-    @Transactional(readOnly = true)
+        @Transactional(readOnly = true)
     public List<CategoryResponse> findAll() {
         List<Category> categories = categoryRepository.findAll();
-        Map<Long, List<Category>> children = categories.stream()
+        Map<Long, List<Category>> children = categories.stream() // Gom danh mục con theo ID cha để dựng cây.
                 .filter(category -> category.getParent() != null)
                 .collect(Collectors.groupingBy(category -> category.getParent().getId()));
         return categories.stream().filter(category -> category.getParent() == null)
                 .map(category -> tree(category, children)).toList();
     }
 
-    @Transactional(readOnly = true)
+        @Transactional(readOnly = true)
     public CategoryResponse findBySlug(String slug) {
         Category category = categoryRepository.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + slug));
@@ -63,7 +63,7 @@ public class CategoryService {
         return CategoryResponse.from(categoryRepository.save(category));
     }
 
-    @Transactional
+        @Transactional
     public CategoryResponse update(Long id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + id));
@@ -86,7 +86,7 @@ public class CategoryService {
         return CategoryResponse.from(categoryRepository.save(category));
     }
 
-    @Transactional
+        @Transactional
     public void delete(Long id) {
         if (!categoryRepository.existsById(id)) {
             throw new ResourceNotFoundException("Category not found: " + id);
@@ -103,13 +103,13 @@ public class CategoryService {
         categoryRepository.deleteById(id);
     }
 
-    private Category parent(Long parentId) {
+        private Category parent(Long parentId) {
         if (parentId == null) return null;
         return categoryRepository.findById(parentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Parent category not found: " + parentId));
     }
 
-    private boolean isDescendant(Long categoryId, Long candidateId) {
+        private boolean isDescendant(Long categoryId, Long candidateId) {
         Category cursor = categoryRepository.findById(candidateId)
                 .orElseThrow(() -> new ResourceNotFoundException("Parent category not found: " + candidateId));
         while (cursor != null) {
@@ -119,7 +119,7 @@ public class CategoryService {
         return false;
     }
 
-    private CategoryResponse tree(Category category, Map<Long, List<Category>> children) {
+        private CategoryResponse tree(Category category, Map<Long, List<Category>> children) {
         List<CategoryResponse> nested = children.getOrDefault(category.getId(), List.of()).stream()
                 .map(child -> tree(child, children)).toList();
         return new CategoryResponse(category.getId(), category.getName(), category.getSlug(), category.getDescription(),

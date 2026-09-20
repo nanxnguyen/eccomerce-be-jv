@@ -10,6 +10,7 @@ import com.example.backend.repository.RefreshTokenRepository;
 import com.example.backend.repository.NotificationRepository;
 import com.example.backend.repository.NotificationOutboxRepository;
 import com.example.backend.repository.LowStockAlertStateRepository;
+import com.example.backend.repository.InventoryMovementRepository;
 import com.example.backend.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +34,7 @@ public class TestDataCleaner {
     private final NotificationRepository notificationRepository;
     private final NotificationOutboxRepository notificationOutboxRepository;
     private final LowStockAlertStateRepository lowStockAlertStateRepository;
+    private final InventoryMovementRepository inventoryMovementRepository;
 
     public TestDataCleaner(OrderRepository orderRepository,
                             CartItemRepository cartItemRepository,
@@ -44,7 +46,8 @@ public class TestDataCleaner {
                             RefreshTokenRepository refreshTokenRepository,
                             NotificationRepository notificationRepository,
                             NotificationOutboxRepository notificationOutboxRepository,
-                            LowStockAlertStateRepository lowStockAlertStateRepository) {
+                            LowStockAlertStateRepository lowStockAlertStateRepository,
+                            InventoryMovementRepository inventoryMovementRepository) {
         this.orderRepository = orderRepository;
         this.cartItemRepository = cartItemRepository;
         this.cartRepository = cartRepository;
@@ -56,9 +59,11 @@ public class TestDataCleaner {
         this.notificationRepository = notificationRepository;
         this.notificationOutboxRepository = notificationOutboxRepository;
         this.lowStockAlertStateRepository = lowStockAlertStateRepository;
+        this.inventoryMovementRepository = inventoryMovementRepository;
     }
 
     public void cleanAll() {
+        inventoryMovementRepository.deleteAll();
         notificationRepository.deleteAll();
         notificationOutboxRepository.deleteAll();
         lowStockAlertStateRepository.deleteAll();

@@ -56,8 +56,8 @@ Single Spring Boot monolith, package-by-layer under `com.example.backend` (`cont
 - Auth in ITs: create a `User`, then `jwtService.generateToken(userId, role)`.
 
 ## Code style
-
-Comments (and some docs) are mostly Vietnamese. Older files use 4-space indentation, newer notification/CMS-report code uses 2-space google-java-format style; there is no formatter plugin, so match the file you are editing.
+- Viết code format rõ ràng, dễ đọc, dễ hiểu. 
+- Comments (and some docs) are mostly Vietnamese. Older files use 4-space indentation, newer notification/CMS-report code uses 2-space google-java-format style; there is no formatter plugin, so match the file you are editing.
 
 ## Code rule
 
@@ -92,3 +92,6 @@ Before designing anything non-trivial (payments, auth, inventory/concurrency, no
 - **Verify library APIs against current docs** (Context7 MCP or the official site), not memory. This is Spring Boot 4.1 / Jackson 3 and older tutorials are often wrong.
 - **Take the pattern, not the machinery.** This is a monolith by design: no new infrastructure (message brokers, extra services) and no single-implementation interfaces/factories unless there is a concrete need (`docs/architecture-roadmap.md`).
 - When the choice is non-obvious, name the practice you followed in the code comment (Vietnamese, per Comments) or in your reply.
+
+
+

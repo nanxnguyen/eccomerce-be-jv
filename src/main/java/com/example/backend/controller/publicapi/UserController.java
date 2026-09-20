@@ -1,4 +1,4 @@
-package com.example.backend.controller;
+package com.example.backend.controller.publicapi;
 
 import com.example.backend.dto.UserResponse; // UserResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).

@@ -9,6 +9,7 @@ import com.example.backend.entity.Category;
 import com.example.backend.entity.Order;
 import com.example.backend.entity.OrderItem;
 import com.example.backend.entity.OrderStatus;
+import com.example.backend.entity.InventoryMovementType;
 import com.example.backend.entity.Payment;
 import com.example.backend.entity.PaymentMethod;
 import com.example.backend.entity.PaymentStatus;
@@ -26,6 +27,7 @@ import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.ProductVariantRepository;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.service.payment.PaymentInitResult;
+import com.example.backend.service.InventoryMovementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
@@ -53,11 +55,12 @@ class OrderServiceTest {
     private final ProductVariantRepository productVariantRepository = mock(ProductVariantRepository.class);
     private final UserRepository userRepository = mock(UserRepository.class);
     private final PaymentService paymentService = mock(PaymentService.class);
+    private final InventoryMovementService inventoryMovements = mock(InventoryMovementService.class);
     private final ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
 
     private final OrderService orderService = new OrderService(
             orderRepository, cartRepository, cartItemRepository, addressRepository,
-            productVariantRepository, userRepository, paymentService, eventPublisher, 15);
+            productVariantRepository, userRepository, paymentService, inventoryMovements, eventPublisher, 15);
 
     private User user;
     private Cart cart;
@@ -89,6 +92,7 @@ class OrderServiceTest {
         assertThat(response.totalAmount()).isEqualTo(new BigDecimal("39.98"));
         assertThat(variant.getStockQuantity()).isEqualTo(48);
         assertThat(variant.getReservedQuantity()).isZero();
+        verify(inventoryMovements).record(variant, null, InventoryMovementType.SALE, -2, 0);
         verify(cartItemRepository).deleteAll(List.of(item));
         verify(paymentService, never()).initiate(any());
     }
@@ -109,6 +113,7 @@ class OrderServiceTest {
         assertThat(response.paymentInit().clientSecret()).isEqualTo("secret");
         assertThat(variant.getStockQuantity()).isEqualTo(50);
         assertThat(variant.getReservedQuantity()).isEqualTo(2);
+        verify(inventoryMovements).record(variant, null, InventoryMovementType.RESERVATION, 0, 2);
     }
 
     @Test
@@ -154,7 +159,45 @@ class OrderServiceTest {
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         assertThat(order.getPayment().getStatus()).isEqualTo(PaymentStatus.FAILED);
         assertThat(variant.getReservedQuantity()).isZero();
+        verify(inventoryMovements).record(variant, 500L, InventoryMovementType.RESERVATION_RELEASED, 0, -3);
         verify(orderRepository).save(order);
+    }
+
+    @Test
+    void successfulPaymentRecordsStockAndReservationChangesTogether() {
+        ProductVariant variant = variant(200L, 50, 2);
+        Order order = orderWithOneItem(variant, OrderStatus.PENDING_PAYMENT, PaymentStatus.PENDING);
+        when(orderRepository.findById(500L)).thenReturn(Optional.of(order));
+        when(productVariantRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(variant));
+
+        orderService.confirmPayment(500L, true, "txn-1");
+
+        assertThat(variant.getStockQuantity()).isEqualTo(48);
+        assertThat(variant.getReservedQuantity()).isZero();
+        verify(inventoryMovements).record(variant, 500L, InventoryMovementType.PAYMENT_CAPTURED, -2, -2);
+    }
+
+    @Test
+    void cancelConfirmedOrderRecordsReturnedStock() {
+        ProductVariant variant = variant(200L, 48, 0);
+        Order order = orderWithOneItem(variant, OrderStatus.CONFIRMED, PaymentStatus.SUCCESS);
+        when(orderRepository.findByIdAndUserId(500L, 1L)).thenReturn(Optional.of(order));
+        when(productVariantRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(variant));
+
+        orderService.cancel("nhut@example.com", 500L);
+
+        assertThat(variant.getStockQuantity()).isEqualTo(50);
+        verify(inventoryMovements).record(variant, 500L, InventoryMovementType.RESTOCKED, 2, 0);
+    }
+
+    private Order orderWithOneItem(ProductVariant variant, OrderStatus status, PaymentStatus paymentStatus) {
+        Order order = Order.builder().id(500L).user(user).status(status).paymentMethod(PaymentMethod.STRIPE)
+                .recipientName("Nhut").phone("0900000000").addressLine("123 Main St")
+                .totalAmount(new BigDecimal("39.98")).build();
+        order.addItem(OrderItem.builder().variant(variant).productName("T-Shirt").sku("TSHIRT-M")
+                .unitPrice(new BigDecimal("19.99")).quantity(2).build());
+        order.assignPayment(Payment.builder().gateway(PaymentMethod.STRIPE).status(paymentStatus).build());
+        return order;
     }
 
     private ProductVariant variant(Long id, int stock, int reserved) {

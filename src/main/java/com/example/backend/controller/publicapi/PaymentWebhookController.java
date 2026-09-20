@@ -1,4 +1,4 @@
-package com.example.backend.controller;
+package com.example.backend.controller.publicapi;
 
 import com.example.backend.entity.PaymentMethod; // PaymentMethod (entity ánh xạ dữ liệu với bảng database).
 import com.example.backend.service.OrderService; // OrderService (service xử lý nghiệp vụ).

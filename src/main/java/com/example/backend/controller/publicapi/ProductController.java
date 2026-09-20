@@ -1,11 +1,10 @@
-package com.example.backend.controller;
+package com.example.backend.controller.publicapi;
 
 import com.example.backend.dto.ProductImageRequest; // ProductImageRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.dto.ProductRequest; // ProductRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.dto.ProductResponse; // ProductResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.dto.ProductSummaryResponse; // ProductSummaryResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.dto.ProductVariantRequest; // ProductVariantRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.entity.ProductStatus; // ProductStatus (entity ánh xạ dữ liệu với bảng database).
 import com.example.backend.service.ProductService; // ProductService (service xử lý nghiệp vụ).
 import jakarta.validation.Valid; // annotation/API kiểm tra dữ liệu đầu vào (Valid).
 import org.springframework.data.domain.Page; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Page).
@@ -24,55 +23,62 @@ import org.springframework.web.bind.annotation.RequestMapping; // annotation Spr
 import org.springframework.web.bind.annotation.RequestParam; // annotation Spring MVC để khai báo route/đọc request (RequestParam).
 import org.springframework.web.bind.annotation.RestController; // annotation Spring MVC để khai báo route/đọc request (RestController).
 
+// GET là public (SecurityConfig đã permitAll cho GET /api/products/**), còn tạo/sửa/xóa/thêm
+// variant/image chỉ dành cho ADMIN - xem giải thích cơ chế @PreAuthorize ở CategoryController.
 @RestController
-@RequestMapping("/api/cms/products")
-@PreAuthorize("hasRole('ADMIN')")
-public class CmsProductController {
+@RequestMapping("/api/products")
+public class ProductController {
 
     private final ProductService productService;
 
-    public CmsProductController(ProductService productService) {
+    public ProductController(ProductService productService) {
         this.productService = productService;
     }
 
     @GetMapping
-    public Page<ProductSummaryResponse> list(@RequestParam(required = false) ProductStatus status,
-                                              @RequestParam(required = false) Long categoryId,
+    public Page<ProductSummaryResponse> list(@RequestParam(required = false) Long categoryId,
                                               @RequestParam(required = false) String search,
                                               @PageableDefault(size = 20) Pageable pageable) {
-        return productService.listAdmin(status, categoryId, search, pageable);
+        return productService.list(categoryId, search, pageable);
     }
 
-    @GetMapping("/{id}")
-    public ProductResponse get(@PathVariable Long id) {
-        return productService.getByIdAdmin(id);
+    @GetMapping("/{slug}")
+    public ProductResponse getBySlug(@PathVariable String slug) {
+        return productService.getBySlug(slug);
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody ProductRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.create(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ProductResponse update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
         return productService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         productService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
+    // {id} là Long: truyền 1 giá trị không phải số (vd: slug) khiến Spring không convert được
+    // path variable -> ném MethodArgumentTypeMismatchException. GlobalExceptionHandler có handler
+    // riêng cho ngoại lệ này (xem GlobalExceptionHandler.handleTypeMismatch), trả về 400 Bad
+    // Request rõ ràng chứ không rơi vào handler Exception.class chung nữa.
     @PostMapping("/{id}/variants")
-    public ResponseEntity<ProductResponse> addVariant(@PathVariable Long id,
-                                                       @Valid @RequestBody ProductVariantRequest request) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProductResponse> addVariant(@PathVariable Long id, @Valid @RequestBody ProductVariantRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.addVariant(id, request));
     }
 
     @PostMapping("/{id}/images")
-    public ResponseEntity<ProductResponse> addImage(@PathVariable Long id,
-                                                    @Valid @RequestBody ProductImageRequest request) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProductResponse> addImage(@PathVariable Long id, @Valid @RequestBody ProductImageRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.addImage(id, request));
     }
 }

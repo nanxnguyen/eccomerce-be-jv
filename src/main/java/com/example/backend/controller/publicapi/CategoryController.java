@@ -1,4 +1,4 @@
-package com.example.backend.controller;
+package com.example.backend.controller.publicapi;
 
 import com.example.backend.dto.CategoryRequest; // CategoryRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.dto.CategoryResponse; // CategoryResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).

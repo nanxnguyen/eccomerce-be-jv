@@ -1,4 +1,4 @@
-package com.example.backend.controller;
+package com.example.backend.controller.publicapi;
 
 import com.example.backend.dto.AuthResponse; // AuthResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.dto.LoginRequest; // LoginRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).

@@ -1,14 +1,14 @@
 package com.example.backend.service;
 
-import com.example.backend.entity.Role; // Role (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.repository.UserRepository; // UserRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import org.springframework.security.authentication.BadCredentialsException; // thành phần Spring Security cho xác thực/phân quyền (BadCredentialsException).
-import org.springframework.security.core.userdetails.UserDetails; // thành phần Spring Security cho xác thực/phân quyền (UserDetails).
-import org.springframework.security.oauth2.jwt.Jwt; // thành phần Spring Security cho xác thực/phân quyền (Jwt).
-import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
-import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
-import org.springframework.util.StringUtils; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (StringUtils).
+import com.example.backend.entity.Role;
+import com.example.backend.entity.User;
+import com.example.backend.repository.UserRepository;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 public class KeycloakUserProvisioner {
@@ -19,9 +19,9 @@ public class KeycloakUserProvisioner {
         this.userRepository = userRepository;
     }
 
-    @Transactional
+        @Transactional
     public UserDetails resolve(Jwt jwt) {
-        String subject = jwt.getSubject();
+        String subject = jwt.getSubject(); // Dùng subject ổn định từ Keycloak để nhận diện tài khoản.
         if (!StringUtils.hasText(subject)) throw new BadCredentialsException("Keycloak token has no subject");
 
         User user = userRepository.findByKeycloakSubject(subject).orElse(null);
@@ -49,7 +49,7 @@ public class KeycloakUserProvisioner {
                 .build();
     }
 
-    private static String displayName(Jwt jwt, String email) {
+        private static String displayName(Jwt jwt, String email) {
         String name = jwt.getClaimAsString("name");
         if (!StringUtils.hasText(name)) name = jwt.getClaimAsString("preferred_username");
         return StringUtils.hasText(name) ? name : email;

@@ -1,9 +1,13 @@
-package com.example.backend.controller;
+package com.example.backend.controller.publicapi;
 
 import com.example.backend.dto.CheckoutRequest; // CheckoutRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.dto.OrderResponse; // OrderResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.dto.PaymentResponse; // PaymentResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.service.OrderService; // OrderService (service xử lý nghiệp vụ).
+import com.example.backend.service.PdfDocumentService;
+import org.thymeleaf.context.Context;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import jakarta.validation.Valid; // annotation/API kiểm tra dữ liệu đầu vào (Valid).
 import org.springframework.data.domain.Page; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Page).
 import org.springframework.data.domain.Pageable; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Pageable).
@@ -25,10 +29,12 @@ import org.springframework.web.bind.annotation.RestController; // annotation Spr
 public class OrderController {
 
     private final OrderService orderService;
+    private final PdfDocumentService pdfDocuments;
 
     // Spring truyền service vào qua constructor (dependency injection).
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, PdfDocumentService pdfDocuments) {
         this.orderService = orderService;
+        this.pdfDocuments = pdfDocuments;
     }
 
     // GET /api/orders: lấy đơn thuộc user đang đăng nhập; mặc định mỗi trang có 20 đơn.
@@ -67,5 +73,24 @@ public class OrderController {
     @PostMapping("/{id}/cancel")
     public OrderResponse cancel(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
         return orderService.cancel(userDetails.getUsername(), id);
+    }
+
+    // Tạo chứng từ PDF từ dữ liệu đơn của chính khách hàng đang đăng nhập.
+    @GetMapping(value = "/{id}/invoice.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> invoice(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
+        Context context = new Context(java.util.Locale.forLanguageTag("vi"));
+        context.setVariable("title", "Hóa đơn đơn hàng (bản tham khảo)");
+        context.setVariable("invoice", true);
+        OrderResponse order = orderService.getOrder(userDetails.getUsername(), id);
+        context.setVariable("order", order);
+        context.setVariable("createdAt", java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                .withZone(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).format(order.createdAt()));
+        return pdfResponse(pdfDocuments.render("pdf/order", context), "don-hang-" + id + ".pdf");
+    }
+
+    private static ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filename) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(pdf);
     }
 }

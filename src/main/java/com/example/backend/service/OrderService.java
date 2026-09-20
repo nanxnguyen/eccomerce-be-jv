@@ -1,49 +1,50 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.CheckoutRequest; // CheckoutRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.OrderResponse; // OrderResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.PaymentResponse; // PaymentResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.entity.Address; // Address (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.Cart; // Cart (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.CartItem; // CartItem (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.Order; // Order (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.OrderItem; // OrderItem (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.OrderStatus; // OrderStatus (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.Payment; // Payment (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.PaymentMethod; // PaymentMethod (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.PaymentStatus; // PaymentStatus (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.ProductVariant; // ProductVariant (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.event.OrderCancelledEvent; // OrderCancelledEvent (sự kiện nối các bước xử lý).
-import com.example.backend.event.OrderPlacedEvent; // OrderPlacedEvent (sự kiện nối các bước xử lý).
-import com.example.backend.event.PaymentConfirmedEvent; // PaymentConfirmedEvent (sự kiện nối các bước xử lý).
-import com.example.backend.event.OrderStatusChangedEvent; // OrderStatusChangedEvent (sự kiện nối các bước xử lý).
-import com.example.backend.exception.InsufficientStockException; // InsufficientStockException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.exception.InvalidRequestException; // InvalidRequestException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.exception.InvalidOrderStateException; // InvalidOrderStateException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.exception.ResourceNotFoundException; // ResourceNotFoundException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.repository.AddressRepository; // AddressRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.CartItemRepository; // CartItemRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.CartRepository; // CartRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.OrderRepository; // OrderRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.ProductVariantRepository; // ProductVariantRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.UserRepository; // UserRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.service.payment.PaymentInitResult; // PaymentInitResult (payment).
-import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
-import org.springframework.context.ApplicationEventPublisher; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (ApplicationEventPublisher).
-import org.springframework.data.domain.Page; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Page).
-import org.springframework.data.domain.PageRequest; // kiểu Spring Data hỗ trợ truy cập/phân trang database (PageRequest).
-import org.springframework.data.domain.Pageable; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Pageable).
-import org.springframework.data.domain.Sort; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Sort).
-import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
-import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
+import com.example.backend.dto.CheckoutRequest;
+import com.example.backend.dto.OrderResponse;
+import com.example.backend.dto.PaymentResponse;
+import com.example.backend.entity.Address;
+import com.example.backend.entity.Cart;
+import com.example.backend.entity.CartItem;
+import com.example.backend.entity.Order;
+import com.example.backend.entity.OrderItem;
+import com.example.backend.entity.InventoryMovementType;
+import com.example.backend.entity.OrderStatus;
+import com.example.backend.entity.Payment;
+import com.example.backend.entity.PaymentMethod;
+import com.example.backend.entity.PaymentStatus;
+import com.example.backend.entity.ProductVariant;
+import com.example.backend.entity.User;
+import com.example.backend.event.OrderCancelledEvent;
+import com.example.backend.event.OrderPlacedEvent;
+import com.example.backend.event.PaymentConfirmedEvent;
+import com.example.backend.event.OrderStatusChangedEvent;
+import com.example.backend.exception.InsufficientStockException;
+import com.example.backend.exception.InvalidRequestException;
+import com.example.backend.exception.InvalidOrderStateException;
+import com.example.backend.exception.ResourceNotFoundException;
+import com.example.backend.repository.AddressRepository;
+import com.example.backend.repository.CartItemRepository;
+import com.example.backend.repository.CartRepository;
+import com.example.backend.repository.OrderRepository;
+import com.example.backend.repository.ProductVariantRepository;
+import com.example.backend.repository.UserRepository;
+import com.example.backend.service.payment.PaymentInitResult;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal; // tính tiền chính xác, tránh sai số số thực.
-import java.time.Instant; // kiểu/thao tác thời gian chuẩn Java (Instant).
-import java.time.Duration; // kiểu/thao tác thời gian chuẩn Java (Duration).
-import java.time.temporal.ChronoUnit; // kiểu/thao tác thời gian chuẩn Java (ChronoUnit).
-import java.util.ArrayList; // danh sách có thể thêm phần tử.
-import java.util.List; // danh sách phần tử cùng kiểu.
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class OrderService {
@@ -55,6 +56,7 @@ public class OrderService {
     private final ProductVariantRepository productVariantRepository;
     private final UserRepository userRepository;
     private final PaymentService paymentService;
+    private final InventoryMovementService inventoryMovements;
     private final ApplicationEventPublisher eventPublisher;
     private final int paymentExpiryMinutes;
 
@@ -65,6 +67,7 @@ public class OrderService {
                          ProductVariantRepository productVariantRepository,
                          UserRepository userRepository,
                          PaymentService paymentService,
+                         InventoryMovementService inventoryMovements,
                          ApplicationEventPublisher eventPublisher,
                          @Value("${order.payment-expiry-minutes}") int paymentExpiryMinutes) {
         this.orderRepository = orderRepository;
@@ -74,6 +77,7 @@ public class OrderService {
         this.productVariantRepository = productVariantRepository;
         this.userRepository = userRepository;
         this.paymentService = paymentService;
+        this.inventoryMovements = inventoryMovements;
         this.eventPublisher = eventPublisher;
         this.paymentExpiryMinutes = paymentExpiryMinutes;
     }
@@ -90,7 +94,7 @@ public class OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Cart is empty"));
 
         // 3) Chỉ lấy các dòng giỏ vừa được gửi và thuộc cart của user này.
-        List<CartItem> items = cartItemRepository.findByIdInAndCartId(request.cartItemIds(), cart.getId());
+        List<CartItem> items = cartItemRepository.findByIdInAndCartId(request.cartItemIds(), cart.getId()); // Chỉ nhận các dòng hàng thuộc giỏ của người đang checkout.
         // So sánh số dòng tìm được với số ID client gửi để phát hiện ID sai/không thuộc giỏ.
         if (items.size() != request.cartItemIds().size()) {
             throw new ResourceNotFoundException("One or more cart items not found");
@@ -157,14 +161,6 @@ public class OrderService {
             // Cộng đơn giá nhân số lượng vào tổng đơn.
             total = total.add(variant.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
 
-            // COD trừ tồn thật; online giữ hàng bằng reservedQuantity trong khi chờ thanh toán.
-            if (isCod) {
-                variant.setStockQuantity(variant.getStockQuantity() - cartItem.getQuantity());
-            } else {
-                variant.setReservedQuantity(variant.getReservedQuantity() + cartItem.getQuantity());
-            }
-            // Đưa thay đổi tồn/giữ hàng vào cùng transaction với việc tạo đơn.
-            productVariantRepository.save(variant);
         }
         // Gán tổng tiền vừa tính cho Order.
         order.setTotalAmount(total);
@@ -178,6 +174,20 @@ public class OrderService {
 
         // Lưu Order; cascade từ Order sẽ lưu kèm OrderItem và Payment.
         orderRepository.save(order);
+        // Lưu lịch sử sau khi có ID đơn, đồng thời cập nhật số dư trong cùng transaction.
+        for (int i = 0; i < items.size(); i++) {
+            CartItem cartItem = items.get(i);
+            ProductVariant variant = lockedVariants.get(i);
+            int quantity = cartItem.getQuantity();
+            if (isCod) {
+                variant.setStockQuantity(variant.getStockQuantity() - quantity);
+                inventoryMovements.record(variant, order.getId(), InventoryMovementType.SALE, -quantity, 0);
+            } else {
+                variant.setReservedQuantity(variant.getReservedQuantity() + quantity);
+                inventoryMovements.record(variant, order.getId(), InventoryMovementType.RESERVATION, 0, quantity);
+            }
+            productVariantRepository.save(variant);
+        }
         // Xóa đúng các mặt hàng đã checkout, không xóa phần còn lại trong giỏ.
         cartItemRepository.deleteAll(items);
 
@@ -195,13 +205,13 @@ public class OrderService {
         return OrderResponse.from(order, initResult);
     }
 
-    @Transactional(readOnly = true)
+        @Transactional(readOnly = true)
     public Page<OrderResponse> getOrders(String email, Pageable pageable) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return orderRepository.findByUserId(user.getId(), pageable).map(order -> OrderResponse.from(order, null));
     }
 
-    @Transactional(readOnly = true)
+        @Transactional(readOnly = true)
     public OrderResponse getOrder(String email, Long orderId) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Order order = orderRepository.findByIdAndUserId(orderId, user.getId())
@@ -209,7 +219,14 @@ public class OrderService {
         return OrderResponse.from(order, null);
     }
 
-    @Transactional(readOnly = true)
+        @Transactional(readOnly = true)
+    public OrderResponse getCmsOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + orderId));
+        return OrderResponse.from(order, null);
+    }
+
+        @Transactional(readOnly = true)
     public PaymentResponse getPayment(String email, Long orderId) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Order order = orderRepository.findByIdAndUserId(orderId, user.getId())
@@ -231,11 +248,13 @@ public class OrderService {
             for (OrderItem item : order.getItems()) {
                 ProductVariant variant = productVariantRepository.findByIdForUpdate(item.getVariant().getId())
                         .orElseThrow(() -> new ResourceNotFoundException("Product variant not found"));
-                variant.setStockQuantity(variant.getStockQuantity() - item.getQuantity());
+                variant.setStockQuantity(variant.getStockQuantity() - item.getQuantity()); // Trừ tồn kho khi đơn COD được xác nhận.
                 variant.setReservedQuantity(variant.getReservedQuantity() - item.getQuantity());
+                inventoryMovements.record(variant, order.getId(), InventoryMovementType.PAYMENT_CAPTURED,
+                        -item.getQuantity(), -item.getQuantity());
                 productVariantRepository.save(variant);
             }
-            order.setStatus(OrderStatus.CONFIRMED);
+            order.setStatus(OrderStatus.CONFIRMED); // Đơn COD được xác nhận ngay khi tạo.
             order.getPayment().setStatus(PaymentStatus.SUCCESS);
             order.getPayment().setPaidAt(Instant.now());
             order.getPayment().setGatewayTransactionRef(gatewayTransactionRef);
@@ -251,13 +270,13 @@ public class OrderService {
         }
     }
 
-    @Transactional(readOnly = true)
+        @Transactional(readOnly = true)
     public Page<OrderResponse> listAllOrders(OrderStatus status, Pageable pageable) {
         Page<Order> page = status != null ? orderRepository.findByStatus(status, pageable) : orderRepository.findAll(pageable);
         return page.map(order -> OrderResponse.from(order, null));
     }
 
-    @Transactional(readOnly = true)
+        @Transactional(readOnly = true)
     public Page<OrderResponse> listCmsOrders(OrderStatus status, Instant from, Instant to,
                                               PaymentStatus paymentStatus, PaymentMethod paymentMethod,
                                               String buyerEmail, Pageable pageable) {
@@ -275,7 +294,7 @@ public class OrderService {
                 .map(order -> OrderResponse.from(order, null));
     }
 
-    @Transactional
+        @Transactional
     public OrderResponse advanceStatus(Long orderId, OrderStatus targetStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + orderId));
@@ -292,7 +311,7 @@ public class OrderService {
         return OrderResponse.from(saved, null);
     }
 
-    @Transactional
+        @Transactional
     public OrderResponse cancel(String email, Long orderId) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Order order = orderRepository.findByIdAndUserId(orderId, user.getId())
@@ -326,6 +345,8 @@ public class OrderService {
             ProductVariant variant = productVariantRepository.findByIdForUpdate(item.getVariant().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product variant not found"));
             variant.setStockQuantity(variant.getStockQuantity() + item.getQuantity());
+            inventoryMovements.record(variant, order.getId(), InventoryMovementType.RESTOCKED,
+                    item.getQuantity(), 0);
             productVariantRepository.save(variant);
         }
     }
@@ -354,6 +375,8 @@ public class OrderService {
             ProductVariant variant = productVariantRepository.findByIdForUpdate(item.getVariant().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product variant not found"));
             variant.setReservedQuantity(variant.getReservedQuantity() - item.getQuantity());
+            inventoryMovements.record(variant, order.getId(), InventoryMovementType.RESERVATION_RELEASED,
+                    0, -item.getQuantity());
             productVariantRepository.save(variant);
         }
     }

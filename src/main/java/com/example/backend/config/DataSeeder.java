@@ -7,9 +7,11 @@ import com.example.backend.entity.ProductStatus; // ProductStatus (entity ánh x
 import com.example.backend.entity.ProductVariant; // ProductVariant (entity ánh xạ dữ liệu với bảng database).
 import com.example.backend.entity.Role; // Role (entity ánh xạ dữ liệu với bảng database).
 import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
+import com.example.backend.entity.InventoryMovementType;
 import com.example.backend.repository.CategoryRepository; // CategoryRepository (repository truy vấn/lưu dữ liệu qua JPA).
 import com.example.backend.repository.ProductRepository; // ProductRepository (repository truy vấn/lưu dữ liệu qua JPA).
 import com.example.backend.repository.UserRepository; // UserRepository (repository truy vấn/lưu dữ liệu qua JPA).
+import com.example.backend.service.InventoryMovementService;
 import org.springframework.boot.CommandLineRunner; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (CommandLineRunner).
 import org.springframework.context.annotation.Profile; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Profile).
 import org.springframework.security.crypto.password.PasswordEncoder; // thành phần Spring Security cho xác thực/phân quyền (PasswordEncoder).
@@ -36,15 +38,18 @@ public class DataSeeder implements CommandLineRunner {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final PasswordEncoder passwordEncoder;
+    private final InventoryMovementService inventoryMovements;
 
     public DataSeeder(UserRepository userRepository,
                        CategoryRepository categoryRepository,
                        ProductRepository productRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       InventoryMovementService inventoryMovements) {
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
         this.passwordEncoder = passwordEncoder;
+        this.inventoryMovements = inventoryMovements;
     }
 
     @Override
@@ -156,6 +161,10 @@ public class DataSeeder implements CommandLineRunner {
                         .build());
 
                 productRepository.save(product);
+                for (ProductVariant variant : product.getVariants()) {
+                    inventoryMovements.record(variant, null, InventoryMovementType.OPENING_STOCK,
+                            variant.getStockQuantity(), 0);
+                }
             }
         }
     }

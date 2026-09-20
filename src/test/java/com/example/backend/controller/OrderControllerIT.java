@@ -9,10 +9,12 @@ import com.example.backend.dto.ProductVariantRequest;
 import com.example.backend.dto.RegisterRequest;
 import com.example.backend.entity.Order;
 import com.example.backend.entity.OrderStatus;
+import com.example.backend.entity.InventoryMovementType;
 import com.example.backend.entity.PaymentMethod;
 import com.example.backend.entity.Role;
 import com.example.backend.entity.User;
 import com.example.backend.repository.OrderRepository;
+import com.example.backend.repository.InventoryMovementRepository;
 import com.example.backend.repository.ProductVariantRepository;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.security.JwtService;
@@ -40,6 +42,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -50,6 +53,7 @@ class OrderControllerIT {
     @Autowired private ObjectMapper objectMapper;
     @Autowired private UserRepository userRepository;
     @Autowired private OrderRepository orderRepository;
+    @Autowired private InventoryMovementRepository inventoryMovementRepository;
     @Autowired private ProductVariantRepository productVariantRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private JwtService jwtService;
@@ -75,7 +79,7 @@ class OrderControllerIT {
 
         String body = objectMapper.writeValueAsString(new CheckoutRequest(List.of(cartItemId), addressId, PaymentMethod.COD));
 
-        mockMvc.perform(post("/api/orders/checkout")
+        var response = mockMvc.perform(post("/api/orders/checkout")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -84,7 +88,15 @@ class OrderControllerIT {
                 .andExpect(jsonPath("$.paymentMethod").value("COD"))
                 .andExpect(jsonPath("$.totalAmount").value(39.98))
                 .andExpect(jsonPath("$.items.length()").value(1))
-                .andExpect(jsonPath("$.paymentInit").isEmpty());
+                .andExpect(jsonPath("$.paymentInit").isEmpty())
+                .andReturn();
+        Long orderId = objectMapper.readTree(response.getResponse().getContentAsString()).get("id").asLong();
+        var movements = inventoryMovementRepository.findAll();
+        assertThat(movements.stream().filter(movement -> movement.getType() == InventoryMovementType.OPENING_STOCK)
+                .map(movement -> movement.getStockDelta()).toList()).containsExactly(50);
+        assertThat(movements.stream()
+                .filter(movement -> movement.getType() == InventoryMovementType.SALE)
+                .map(movement -> movement.getOrderId()).toList()).containsExactly(orderId);
     }
 
     @Test
@@ -189,6 +201,20 @@ class OrderControllerIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gateway").value("COD"))
                 .andExpect(jsonPath("$.status").value("SUCCESS"));
+
+        byte[] invoice = mockMvc.perform(get("/api/orders/{id}/invoice.pdf", orderId)
+                        .header("Authorization", "Bearer " + tokenA))
+                .andExpect(status().isOk()).andExpect(content().contentType("application/pdf"))
+                .andReturn().getResponse().getContentAsByteArray();
+        assertThat(new String(invoice, 0, 5, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
+        mockMvc.perform(get("/api/orders/{id}/invoice.pdf", orderId).header("Authorization", "Bearer " + tokenB))
+                .andExpect(status().isNotFound());
+
+        byte[] packingSlip = mockMvc.perform(get("/api/cms/orders/{id}/packing-slip.pdf", orderId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk()).andExpect(content().contentType("application/pdf"))
+                .andReturn().getResponse().getContentAsByteArray();
+        assertThat(new String(packingSlip, 0, 5, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
     }
 
     @Test

@@ -1,4 +1,4 @@
-package com.example.backend.controller;
+package com.example.backend.controller.cms;
 
 import com.example.backend.dto.NotificationResponse; // NotificationResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.exception.InvalidRequestException; // InvalidRequestException (loại lỗi nghiệp vụ hoặc dữ liệu).
@@ -7,16 +7,18 @@ import org.springframework.data.domain.Page; // kiểu Spring Data hỗ trợ tr
 import org.springframework.data.domain.PageRequest; // kiểu Spring Data hỗ trợ truy cập/phân trang database (PageRequest).
 import org.springframework.data.domain.Pageable; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Pageable).
 import org.springframework.data.domain.Sort; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Sort).
+import org.springframework.security.access.prepost.PreAuthorize; // thành phần Spring Security cho xác thực/phân quyền (PreAuthorize).
 import org.springframework.security.core.annotation.AuthenticationPrincipal; // thành phần Spring Security cho xác thực/phân quyền (AuthenticationPrincipal).
 import org.springframework.security.core.userdetails.UserDetails; // thành phần Spring Security cho xác thực/phân quyền (UserDetails).
 import org.springframework.web.bind.annotation.*; // annotation Spring MVC để khai báo route/đọc request (*).
 
 @RestController
-@RequestMapping("/api/notifications")
-public class NotificationController {
+@RequestMapping("/api/cms/notifications")
+@PreAuthorize("hasRole('ADMIN')")
+public class CmsNotificationController {
   private final NotificationService service;
 
-  public NotificationController(NotificationService service) {
+  public CmsNotificationController(NotificationService service) {
     this.service = service;
   }
 
@@ -26,23 +28,23 @@ public class NotificationController {
       @RequestParam(required = false) Boolean read,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
-    return service.list(user.getUsername(), read, false, page(page, size));
+    return service.list(user.getUsername(), read, true, page(page, size));
   }
 
   @GetMapping("/unread-count")
   public long unreadCount(@AuthenticationPrincipal UserDetails user) {
-    return service.unreadCount(user.getUsername(), false);
+    return service.unreadCount(user.getUsername(), true);
   }
 
   @PutMapping("/{id}/read")
   public NotificationResponse markRead(
       @AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
-    return service.markRead(user.getUsername(), id, false);
+    return service.markRead(user.getUsername(), id, true);
   }
 
-  @PutMapping("/read-all")
+  @PatchMapping("/read-all")
   public int markAllRead(@AuthenticationPrincipal UserDetails user) {
-    return service.markAllRead(user.getUsername(), false);
+    return service.markAllRead(user.getUsername(), true);
   }
 
   private static Pageable page(int page, int size) {

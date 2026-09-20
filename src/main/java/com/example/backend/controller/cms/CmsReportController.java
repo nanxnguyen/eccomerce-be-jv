@@ -1,4 +1,4 @@
-package com.example.backend.controller;
+package com.example.backend.controller.cms;
 
 import com.example.backend.dto.CmsInventoryItem; // CmsInventoryItem (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.dto.CmsProductSalesReportRow; // CmsProductSalesReportRow (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
@@ -21,6 +21,7 @@ import org.springframework.http.MediaType; // kiểu HTTP như status, header ho
 import org.springframework.http.ResponseEntity; // kiểu HTTP như status, header hoặc response body (ResponseEntity).
 import org.springframework.security.access.prepost.PreAuthorize; // thành phần Spring Security cho xác thực/phân quyền (PreAuthorize).
 import org.springframework.web.bind.annotation.*; // annotation Spring MVC để khai báo route/đọc request (*).
+import org.thymeleaf.context.Context;
 
 @RestController
 @RequestMapping("/api/cms/reports")
@@ -29,10 +30,14 @@ public class CmsReportController {
   private static final int MAX_EXPORT_ROWS = 50_000, EXPORT_PAGE_SIZE = 100;
   private static final MediaType XLSX =
       MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  private static final int PDF_MAX_ROWS = 10_000;
   private final CmsReportService service;
+  private final com.example.backend.service.PdfDocumentService pdfDocuments;
 
-  public CmsReportController(CmsReportService service) {
+  public CmsReportController(CmsReportService service,
+      com.example.backend.service.PdfDocumentService pdfDocuments) {
     this.service = service;
+    this.pdfDocuments = pdfDocuments;
   }
 
   @GetMapping("/sales")
@@ -133,6 +138,62 @@ public class CmsReportController {
           .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
           .body(output.toByteArray());
     }
+  }
+
+  @GetMapping(value = "/{type}/export.pdf", produces = "application/pdf")
+  public ResponseEntity<byte[]> exportPdf(
+      @PathVariable String type,
+      @RequestParam(required = false) Instant from,
+      @RequestParam(required = false) Instant to,
+      @RequestParam(defaultValue = "day") String granularity,
+      @RequestParam(defaultValue = "revenue") String sort,
+      @RequestParam(required = false) Long categoryId,
+      @RequestParam(required = false) Integer threshold) {
+    Context context = new Context(java.util.Locale.forLanguageTag("vi"));
+    context.setVariable("period", type.equals("inventory")
+        ? "Ảnh chụp tồn kho tại thời điểm xuất báo cáo"
+        : "Thời gian: " + (from == null ? "mặc định" : from) + " đến " + (to == null ? "hiện tại" : to));
+    switch (type) {
+      case "sales" -> {
+        context.setVariable("title", "Báo cáo doanh thu");
+        context.setVariable("headers", java.util.List.of("Thời điểm", "Thanh toán", "Trạng thái đơn", "Doanh thu", "Số đơn"));
+        context.setVariable("rows", fetchRows(page -> service.sales(from, to, granularity, page), row ->
+            java.util.List.of(row.bucketStart().toString(), row.paymentMethod().name(), row.orderStatus().name(),
+                row.paidRevenue().toPlainString(), Long.toString(row.paidOrderCount()))));
+      }
+      case "products" -> {
+        context.setVariable("title", "Báo cáo sản phẩm bán chạy");
+        context.setVariable("headers", java.util.List.of("Sản phẩm", "SKU", "Số lượng bán", "Doanh thu"));
+        context.setVariable("rows", fetchRows(page -> service.products(from, to, sort, page), row ->
+            java.util.List.of(row.productName(), row.sku(), Long.toString(row.unitsSold()), row.revenue().toPlainString())));
+      }
+      case "inventory" -> {
+        context.setVariable("title", "Báo cáo tồn kho");
+        context.setVariable("headers", java.util.List.of("Sản phẩm", "SKU", "Tồn kho", "Đã giữ", "Khả dụng", "Ngưỡng"));
+        context.setVariable("rows", fetchRows(page -> service.inventory(categoryId, threshold, page), row ->
+            java.util.List.of(row.productName(), row.sku(), Integer.toString(row.stockQuantity()),
+                Integer.toString(row.reservedQuantity()), Integer.toString(row.availableQuantity()),
+                java.util.Objects.toString(row.threshold(), ""))));
+      }
+      default -> throw new InvalidRequestException("report type must be sales, products, or inventory");
+    }
+    byte[] pdf = pdfDocuments.render("pdf/report", context);
+    return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + type + "-report.pdf\"")
+        .body(pdf);
+  }
+
+  private static <T> java.util.List<java.util.List<String>> fetchRows(
+      Function<Pageable, Page<T>> fetch, Function<T, java.util.List<String>> convert) {
+    var result = new java.util.ArrayList<java.util.List<String>>();
+    for (int page = 0; page <= PDF_MAX_ROWS / EXPORT_PAGE_SIZE; page++) {
+      Page<T> rows = fetch.apply(PageRequest.of(page, EXPORT_PAGE_SIZE));
+      if ((long) page * EXPORT_PAGE_SIZE + rows.getNumberOfElements() > PDF_MAX_ROWS)
+        throw new InvalidRequestException("PDF export exceeds 10000 rows");
+      rows.getContent().stream().map(convert).forEach(result::add);
+      if (!rows.hasNext()) return result;
+    }
+    return result;
   }
 
   private static <T> void writeRows(

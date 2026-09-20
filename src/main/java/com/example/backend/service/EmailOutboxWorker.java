@@ -1,17 +1,17 @@
 package com.example.backend.service;
 
-import jakarta.mail.internet.MimeMessage; // thư viện/kiểu MimeMessage được dùng trong file này.
-import java.nio.charset.StandardCharsets; // thư viện/kiểu StandardCharsets được dùng trong file này.
-import java.time.Instant; // kiểu/thao tác thời gian chuẩn Java (Instant).
-import java.util.List; // danh sách phần tử cùng kiểu.
-import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (ConditionalOnExpression).
-import org.springframework.jdbc.core.JdbcTemplate; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (JdbcTemplate).
-import org.springframework.mail.javamail.JavaMailSender; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (JavaMailSender).
-import org.springframework.mail.javamail.MimeMessageHelper; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (MimeMessageHelper).
-import org.springframework.scheduling.annotation.Scheduled; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Scheduled).
-import org.springframework.stereotype.Component; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Component).
-import org.springframework.transaction.support.TransactionTemplate; // quản lý transaction database (TransactionTemplate).
+import jakarta.mail.internet.MimeMessage;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Component
 @ConditionalOnExpression("'${spring.mail.host:}' != ''")
@@ -36,6 +36,7 @@ public class EmailOutboxWorker {
     this.maxAttempts = maxAttempts;
   }
 
+
   @Scheduled(fixedDelayString = "${app.mail.poll-ms:5000}")
   public void processBatch() {
     List<MailRow> batch =
@@ -54,14 +55,14 @@ public class EmailOutboxWorker {
                               rs.getString(3),
                               rs.getString(4),
                               rs.getInt(5)),
-                      BATCH);
+                      BATCH); // Chỉ lấy một lô nhỏ để xử lý mỗi lượt.
               for (MailRow row : rows)
                 jdbc.update(
                     "update notification_outbox set"
                         + " status='SENDING',attempts=attempts+1,lease_until=?,updated_at=now()"
                         + " where id=?",
                     Instant.now().plusSeconds(120),
-                    row.id());
+                    row.id()); // Đánh dấu email đang được worker giữ xử lý.
               return rows;
             });
     if (batch == null) return;
@@ -81,7 +82,7 @@ public class EmailOutboxWorker {
       String html =
           "<p>" + subject(row.type()) + " for order <strong>#" + orderId + "</strong>.</p>";
       helper.setText(text, html);
-      mailSender.send(message);
+      mailSender.send(message); // Gửi email qua SMTP.
       jdbc.update(
           "update notification_outbox set"
               + " status='SENT',sent_at=now(),lease_until=null,last_error=null,updated_at=now()"
@@ -89,7 +90,7 @@ public class EmailOutboxWorker {
           row.id());
     } catch (Exception failure) {
       int attempt = row.attempts() + 1;
-      boolean failed = attempt >= maxAttempts;
+      boolean failed = attempt >= maxAttempts; // Chuyển sang lỗi cuối khi hết số lần thử.
       long delay = Math.min(3600L, 30L << Math.min(attempt - 1, 7));
       String detail = failure.getClass().getSimpleName();
       jdbc.update(
@@ -103,7 +104,7 @@ public class EmailOutboxWorker {
     }
   }
 
-  private static String subject(String type) {
+    private static String subject(String type) {
     return switch (type) {
       case "ORDER_PLACED" -> "Order received";
       case "PAYMENT_CONFIRMED" -> "Payment confirmed";

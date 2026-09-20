@@ -1,16 +1,16 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.AddressRequest; // AddressRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.AddressResponse; // AddressResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.entity.Address; // Address (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.exception.ResourceNotFoundException; // ResourceNotFoundException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.repository.AddressRepository; // AddressRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.UserRepository; // UserRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
-import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
+import com.example.backend.dto.AddressRequest;
+import com.example.backend.dto.AddressResponse;
+import com.example.backend.entity.Address;
+import com.example.backend.entity.User;
+import com.example.backend.exception.ResourceNotFoundException;
+import com.example.backend.repository.AddressRepository;
+import com.example.backend.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List; // danh sách phần tử cùng kiểu.
+import java.util.List;
 
 @Service
 public class AddressService {
@@ -23,9 +23,9 @@ public class AddressService {
         this.userRepository = userRepository;
     }
 
-    @Transactional(readOnly = true)
+        @Transactional(readOnly = true)
     public List<AddressResponse> list(String email) {
-        User user = resolveUser(email);
+        User user = resolveUser(email); // Lấy tài khoản để chỉ đọc địa chỉ của đúng người dùng.
         return addressRepository.findByUserId(user.getId()).stream().map(AddressResponse::from).toList();
     }
 
@@ -34,7 +34,7 @@ public class AddressService {
     @Transactional
     public AddressResponse create(String email, AddressRequest request) {
         User user = resolveUser(email);
-        boolean isFirstAddress = addressRepository.findByUserId(user.getId()).isEmpty();
+        boolean isFirstAddress = addressRepository.findByUserId(user.getId()).isEmpty(); // Địa chỉ đầu tiên sẽ được đặt làm mặc định.
 
         Address address = Address.builder()
                 .user(user)
@@ -50,7 +50,7 @@ public class AddressService {
         return AddressResponse.from(addressRepository.save(address));
     }
 
-    @Transactional
+        @Transactional
     public AddressResponse update(String email, Long addressId, AddressRequest request) {
         Address address = findOwned(email, addressId);
         address.setRecipientName(request.recipientName());
@@ -62,12 +62,12 @@ public class AddressService {
         return AddressResponse.from(addressRepository.save(address));
     }
 
-    @Transactional
+        @Transactional
     public void delete(String email, Long addressId) {
         addressRepository.delete(findOwned(email, addressId));
     }
 
-    @Transactional
+        @Transactional
     public AddressResponse setDefault(String email, Long addressId) {
         User user = resolveUser(email);
         Address target = findOwned(email, addressId);
@@ -83,13 +83,13 @@ public class AddressService {
         return AddressResponse.from(addressRepository.save(target));
     }
 
-    private User resolveUser(String email) {
+        private User resolveUser(String email) {
         return userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
-    private Address findOwned(String email, Long addressId) {
+        private Address findOwned(String email, Long addressId) {
         User user = resolveUser(email);
-        return addressRepository.findByIdAndUserId(addressId, user.getId())
+        return addressRepository.findByIdAndUserId(addressId, user.getId()) // Tìm theo cả ID và chủ sở hữu để không sửa địa chỉ người khác.
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found: " + addressId));
     }
 }

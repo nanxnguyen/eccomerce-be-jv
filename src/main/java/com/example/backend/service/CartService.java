@@ -1,19 +1,19 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.CartItemAddRequest; // CartItemAddRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.CartItemQuantityRequest; // CartItemQuantityRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.CartResponse; // CartResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.entity.Cart; // Cart (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.CartItem; // CartItem (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.ProductVariant; // ProductVariant (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.User; // User (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.exception.ResourceNotFoundException; // ResourceNotFoundException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.repository.CartItemRepository; // CartItemRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.CartRepository; // CartRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.ProductVariantRepository; // ProductVariantRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.UserRepository; // UserRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
-import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
+import com.example.backend.dto.CartItemAddRequest;
+import com.example.backend.dto.CartItemQuantityRequest;
+import com.example.backend.dto.CartResponse;
+import com.example.backend.entity.Cart;
+import com.example.backend.entity.CartItem;
+import com.example.backend.entity.ProductVariant;
+import com.example.backend.entity.User;
+import com.example.backend.exception.ResourceNotFoundException;
+import com.example.backend.repository.CartItemRepository;
+import com.example.backend.repository.CartRepository;
+import com.example.backend.repository.ProductVariantRepository;
+import com.example.backend.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CartService {
@@ -33,7 +33,7 @@ public class CartService {
         this.userRepository = userRepository;
     }
 
-    @Transactional
+        @Transactional
     public CartResponse getCart(String email) {
         Cart cart = getOrCreateCart(email);
         return CartResponse.from(cart, cartItemRepository.findByCartId(cart.getId()));
@@ -49,23 +49,23 @@ public class CartService {
 
         CartItem item = cartItemRepository.findByCartIdAndVariantId(cart.getId(), variant.getId())
                 .orElseGet(() -> CartItem.builder().cart(cart).variant(variant).quantity(0).build());
-        item.setQuantity(item.getQuantity() + request.quantity());
+        item.setQuantity(item.getQuantity() + request.quantity()); // Cộng số lượng mới vào dòng hàng đã có.
         cartItemRepository.save(item);
 
         return CartResponse.from(cart, cartItemRepository.findByCartId(cart.getId()));
     }
 
-    @Transactional
+        @Transactional
     public CartResponse updateItem(String email, Long itemId, CartItemQuantityRequest request) {
         Cart cart = getOrCreateCart(email);
-        CartItem item = cartItemRepository.findByIdAndCartId(itemId, cart.getId())
+        CartItem item = cartItemRepository.findByIdAndCartId(itemId, cart.getId()) // Chỉ lấy dòng hàng thuộc giỏ của người dùng hiện tại.
                 .orElseThrow(() -> new ResourceNotFoundException("Cart item not found: " + itemId));
-        item.setQuantity(request.quantity());
+        item.setQuantity(request.quantity()); // Thay số lượng dòng hàng bằng giá trị client gửi.
         cartItemRepository.save(item);
         return CartResponse.from(cart, cartItemRepository.findByCartId(cart.getId()));
     }
 
-    @Transactional
+        @Transactional
     public CartResponse removeItem(String email, Long itemId) {
         Cart cart = getOrCreateCart(email);
         CartItem item = cartItemRepository.findByIdAndCartId(itemId, cart.getId())
@@ -74,7 +74,7 @@ public class CartService {
         return CartResponse.from(cart, cartItemRepository.findByCartId(cart.getId()));
     }
 
-    private Cart getOrCreateCart(String email) {
+        private Cart getOrCreateCart(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return cartRepository.findByUserId(user.getId())

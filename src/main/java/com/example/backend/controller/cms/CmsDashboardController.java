@@ -1,4 +1,4 @@
-package com.example.backend.controller;
+package com.example.backend.controller.cms;
 
 import com.example.backend.dto.CmsDashboardSummaryResponse; // CmsDashboardSummaryResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
 import com.example.backend.dto.CmsRevenueTimelineResponse; // CmsRevenueTimelineResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).

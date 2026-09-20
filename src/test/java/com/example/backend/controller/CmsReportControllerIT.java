@@ -156,6 +156,27 @@ class CmsReportControllerIT {
         .andExpect(status().isBadRequest());
   }
 
+  @Test
+  void cPdfExportsAreReadableAndRequireAdmin() throws Exception {
+    Category c = categories.save(Category.builder().name("Tools").slug("tools").build());
+    Product p = products.save(Product.builder().category(c).name("Current Name").slug("current-name")
+        .status(ProductStatus.ACTIVE).build());
+    ProductVariant v = variants.save(ProductVariant.builder().product(p).sku("CURRENT-SKU")
+        .price(new BigDecimal("10.00")).stockQuantity(12).reservedQuantity(3).build());
+    saveOrder(v, "Snapshot Hammer", "OLD-SKU", "10.25", 2, PaymentStatus.SUCCESS, FROM.plusSeconds(1));
+
+    for (String type : java.util.List.of("sales", "products", "inventory")) {
+      var request = get("/api/cms/reports/{type}/export.pdf", type).header("Authorization", "Bearer " + admin);
+      if (!type.equals("inventory")) request.param("from", FROM.toString()).param("to", TO.toString());
+      byte[] pdf = mvc.perform(request).andExpect(status().isOk())
+          .andExpect(content().contentType("application/pdf"))
+          .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment; filename=\"" + type + "-report.pdf\"")))
+          .andReturn().getResponse().getContentAsByteArray();
+      assertTrue(new String(pdf, 0, 5, java.nio.charset.StandardCharsets.US_ASCII).equals("%PDF-"));
+    }
+    mvc.perform(get("/api/cms/reports/sales/export.pdf")).andExpect(status().isUnauthorized());
+  }
+
   private void saveOrder(
       ProductVariant v,
       String name,

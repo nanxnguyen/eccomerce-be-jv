@@ -1,24 +1,25 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.ProductImageRequest; // ProductImageRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.ProductRequest; // ProductRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.ProductResponse; // ProductResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.ProductSummaryResponse; // ProductSummaryResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.dto.ProductVariantRequest; // ProductVariantRequest (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.entity.Category; // Category (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.Product; // Product (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.ProductImage; // ProductImage (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.ProductStatus; // ProductStatus (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.ProductVariant; // ProductVariant (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.exception.DuplicateResourceException; // DuplicateResourceException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.exception.ResourceNotFoundException; // ResourceNotFoundException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.repository.CategoryRepository; // CategoryRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.ProductRepository; // ProductRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import com.example.backend.repository.ProductVariantRepository; // ProductVariantRepository (repository truy vấn/lưu dữ liệu qua JPA).
-import org.springframework.data.domain.Page; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Page).
-import org.springframework.data.domain.Pageable; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Pageable).
-import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
-import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
+import com.example.backend.dto.ProductImageRequest;
+import com.example.backend.dto.ProductRequest;
+import com.example.backend.dto.ProductResponse;
+import com.example.backend.dto.ProductSummaryResponse;
+import com.example.backend.dto.ProductVariantRequest;
+import com.example.backend.entity.Category;
+import com.example.backend.entity.Product;
+import com.example.backend.entity.ProductImage;
+import com.example.backend.entity.ProductStatus;
+import com.example.backend.entity.ProductVariant;
+import com.example.backend.entity.InventoryMovementType;
+import com.example.backend.exception.DuplicateResourceException;
+import com.example.backend.exception.ResourceNotFoundException;
+import com.example.backend.repository.CategoryRepository;
+import com.example.backend.repository.ProductRepository;
+import com.example.backend.repository.ProductVariantRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProductService {
@@ -26,13 +27,16 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductVariantRepository productVariantRepository;
     private final CategoryRepository categoryRepository;
+    private final InventoryMovementService inventoryMovements;
 
     public ProductService(ProductRepository productRepository,
                            ProductVariantRepository productVariantRepository,
-                           CategoryRepository categoryRepository) {
+                           CategoryRepository categoryRepository,
+                           InventoryMovementService inventoryMovements) {
         this.productRepository = productRepository;
         this.productVariantRepository = productVariantRepository;
         this.categoryRepository = categoryRepository;
+        this.inventoryMovements = inventoryMovements;
     }
 
     // Vì sao 4 nhánh gọi 4 repository method khác nhau thay vì 1 query với tham số optional:
@@ -62,14 +66,14 @@ public class ProductService {
         return page.map(ProductSummaryResponse::from);
     }
 
-    @Transactional(readOnly = true)
+        @Transactional(readOnly = true)
     public Page<ProductSummaryResponse> listAdmin(ProductStatus status, Long categoryId, String search, Pageable pageable) {
         String normalizedSearch = search == null || search.isBlank() ? null : search.trim();
         return productRepository.findAdminProducts(status, categoryId, normalizedSearch, pageable)
                 .map(ProductSummaryResponse::from);
     }
 
-    @Transactional(readOnly = true)
+        @Transactional(readOnly = true)
     public ProductResponse getByIdAdmin(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
@@ -141,14 +145,14 @@ public class ProductService {
         // create(): ở update(), null nghĩa là "client không muốn đổi status", không phải "chưa
         // từng có status". Admin ẩn 1 sản phẩm (set INACTIVE) xong sửa tên/mô tả ở lần gọi sau mà
         // không gửi lại status thì sản phẩm đó phải VẪN ẩn, không tự động hiện lại.
-        if (request.status() != null) {
+        if (request.status() != null) { // Chỉ đổi trạng thái khi client có gửi giá trị mới.
             product.setStatus(request.status());
         }
 
         return ProductResponse.from(productRepository.save(product));
     }
 
-    @Transactional
+        @Transactional
     public void delete(Long id) {
         if (!productRepository.existsById(id)) {
             throw new ResourceNotFoundException("Product not found: " + id);
@@ -166,7 +170,7 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
 
-        if (productVariantRepository.existsBySku(request.sku())) {
+        if (productVariantRepository.existsBySku(request.sku())) { // Không cho tạo biến thể trùng SKU.
             throw new DuplicateResourceException("SKU already exists: " + request.sku());
         }
 
@@ -179,10 +183,15 @@ public class ProductService {
                 .build();
 
         product.addVariant(variant);
-        return ProductResponse.from(productRepository.save(product));
+        productVariantRepository.save(variant); // Lưu biến thể để lấy ID trước khi ghi sổ kho.
+        if (request.stockQuantity() > 0) {
+            inventoryMovements.record(variant, null, InventoryMovementType.OPENING_STOCK,
+                    request.stockQuantity(), 0); // Ghi tồn đầu kỳ vào sổ kho.
+        }
+        return ProductResponse.from(product);
     }
 
-    @Transactional
+        @Transactional
     public ProductResponse addImage(Long productId, ProductImageRequest request) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));

@@ -1,20 +1,20 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.NotificationResponse; // NotificationResponse (DTO chuyển dữ liệu giữa HTTP và ứng dụng).
-import com.example.backend.entity.*; // * (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.event.*; // * (sự kiện nối các bước xử lý).
-import com.example.backend.exception.InvalidRequestException; // InvalidRequestException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.exception.ResourceNotFoundException; // ResourceNotFoundException (loại lỗi nghiệp vụ hoặc dữ liệu).
-import com.example.backend.repository.*; // * (repository truy vấn/lưu dữ liệu qua JPA).
-import java.util.List; // danh sách phần tử cùng kiểu.
-import org.springframework.data.domain.Page; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Page).
-import org.springframework.data.domain.Pageable; // kiểu Spring Data hỗ trợ truy cập/phân trang database (Pageable).
-import org.springframework.jdbc.core.ConnectionCallback; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (ConnectionCallback).
-import org.springframework.jdbc.core.JdbcTemplate; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (JdbcTemplate).
-import org.springframework.stereotype.Service; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Service).
-import org.springframework.transaction.annotation.Transactional; // quản lý transaction database (Transactional).
-import org.springframework.transaction.event.TransactionPhase; // quản lý transaction database (TransactionPhase).
-import org.springframework.transaction.event.TransactionalEventListener; // quản lý transaction database (TransactionalEventListener).
+import com.example.backend.dto.NotificationResponse;
+import com.example.backend.entity.*;
+import com.example.backend.event.*;
+import com.example.backend.exception.InvalidRequestException;
+import com.example.backend.exception.ResourceNotFoundException;
+import com.example.backend.repository.*;
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.ConnectionCallback;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Service
 public class NotificationService {
@@ -38,12 +38,13 @@ public class NotificationService {
     this.jdbc = jdbc;
   }
 
+
   @Transactional
   public void recordOrderEvent(
       Long orderId, String type, String title, String message, boolean cmsAlert) {
     Order order = orders.findById(orderId).orElse(null);
     if (order == null) return;
-    String key = "order:" + orderId + ":" + type;
+    String key = "order:" + orderId + ":" + type; // Tạo khóa để không ghi lặp cùng một sự kiện đơn hàng.
     addNotification(order.getUser(), order, key, type, title, message);
     if (cmsAlert)
       for (User admin : users.findAllByRole(Role.ADMIN))
@@ -59,6 +60,7 @@ public class NotificationService {
     }
     for (OrderItem item : order.getItems()) evaluateLowStock(item.getVariant());
   }
+
 
   @Transactional(readOnly = true)
   public Page<NotificationResponse> list(
@@ -91,6 +93,7 @@ public class NotificationService {
     return result.map(NotificationService::response);
   }
 
+
   @Transactional(readOnly = true)
   public long unreadCount(String email, boolean cms) {
     User user =
@@ -100,6 +103,7 @@ public class NotificationService {
             user.getId(), List.of("CMS_NEW_ORDER", "LOW_STOCK"))
         : notifications.countByRecipientIdAndTypeNotInAndReadAtIsNull(user.getId(), CMS_TYPES);
   }
+
 
   @Transactional
   public NotificationResponse markRead(String email, Long notificationId, boolean cms) {
@@ -120,6 +124,7 @@ public class NotificationService {
     return response(n);
   }
 
+
   @Transactional
   public int markAllRead(String email, boolean cms) {
     User user =
@@ -128,7 +133,7 @@ public class NotificationService {
     return notifications.markAllCustomerRead(user.getId(), CMS_TYPES, java.time.Instant.now());
   }
 
-  private static NotificationResponse response(Notification n) {
+    private static NotificationResponse response(Notification n) {
     return new NotificationResponse(
         n.getId(),
         n.getOrder() == null ? null : n.getOrder().getId(),
@@ -139,9 +144,9 @@ public class NotificationService {
         n.getCreatedAt());
   }
 
-  private void addNotification(
+    private void addNotification(
       User user, Order order, String key, String type, String title, String message) {
-    if (notifications.existsByRecipientIdAndEventKey(user.getId(), key)) return;
+    if (notifications.existsByRecipientIdAndEventKey(user.getId(), key)) return; // Bỏ qua nếu người nhận đã có thông báo cùng sự kiện.
     Notification n = new Notification();
     n.setRecipient(user);
     n.setOrder(order);
@@ -152,9 +157,9 @@ public class NotificationService {
     notifications.save(n);
   }
 
-  private void evaluateLowStock(ProductVariant variant) {
+    private void evaluateLowStock(ProductVariant variant) {
     int threshold = 5;
-    boolean below = variant.getAvailableQuantity() <= threshold;
+    boolean below = variant.getAvailableQuantity() <= threshold; // Kiểm tra số hàng có thể bán đã chạm ngưỡng thấp chưa.
     String database =
         jdbc.execute((ConnectionCallback<String>) c -> c.getMetaData().getDatabaseProductName());
     boolean crossed;
@@ -205,11 +210,13 @@ public class NotificationService {
     }
   }
 
+
   @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
   public void onOrderPlaced(OrderPlacedEvent e) {
     recordOrderEvent(
         e.orderId(), "ORDER_PLACED", "Order placed", "Your order has been placed.", true);
   }
+
 
   @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
   public void onPaymentConfirmed(PaymentConfirmedEvent e) {
@@ -220,6 +227,7 @@ public class NotificationService {
         "Payment for your order was confirmed.",
         false);
   }
+
 
   @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
   public void onOrderCancelled(OrderCancelledEvent e) {
@@ -234,6 +242,7 @@ public class NotificationService {
       recordOrderEvent(
           e.orderId(), "ORDER_CANCELLED", "Order cancelled", "Your order was cancelled.", false);
   }
+
 
   @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
   public void onStatusChanged(OrderStatusChangedEvent e) {

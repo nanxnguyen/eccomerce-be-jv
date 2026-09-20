@@ -1,52 +1,69 @@
+# Các dịch vụ chạy cùng nhau trong môi trường phát triển hoặc triển khai bằng Docker Compose.
 services:
+  # PostgreSQL: nơi lưu dữ liệu chính của ứng dụng.
   db:
+    # Image PostgreSQL 16 gọn nhẹ.
     image: postgres:16-alpine
+    # Tự khởi động lại nếu dừng ngoài ý muốn.
     restart: unless-stopped
+    # Thông tin tạo database và tài khoản khi khởi tạo lần đầu.
     environment:
       POSTGRES_DB: backend
       POSTGRES_USER: backend
       POSTGRES_PASSWORD: backend
+    # Mở cổng database để công cụ trên máy host có thể kết nối.
     ports:
       - "5432:5432"
+    # Giữ dữ liệu database khi container được tạo lại.
     volumes:
       - db_data:/var/lib/postgresql/data
+    # Compose dùng kiểm tra này để biết database đã sẵn sàng chưa.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U backend"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  # Redis: dịch vụ dữ liệu trong bộ nhớ được ứng dụng sử dụng.
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    # Mở cổng Redis cho máy host.
     ports:
       - "6379:6379"
+    # Xác nhận Redis đang phản hồi.
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  # Keycloak: máy chủ đăng nhập và cấp token JWT.
   keycloak:
     image: quay.io/keycloak/keycloak:26.7.3
     restart: unless-stopped
+    # Chạy chế độ phát triển và nạp realm từ thư mục cấu hình.
     command: start-dev --import-realm
+    # Tài khoản quản trị mặc định có thể được ghi đè bằng biến môi trường.
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-dev-only-change-me}
       KC_HOSTNAME: http://localhost:8180
       KC_HEALTH_ENABLED: "true"
+    # Chỉ mở Keycloak trên localhost của máy host.
     ports:
       - "127.0.0.1:8180:8080"
+    # Nạp cấu hình realm chỉ đọc và lưu dữ liệu Keycloak lâu dài.
     volumes:
       - ./config/keycloak:/opt/keycloak/data/import:ro
       - keycloak_data:/opt/keycloak/data
 
-  # Image build bằng Cloud Native Buildpacks (đã cấu hình sẵn trong pom.xml), không cần Dockerfile:
+  # Ứng dụng Spring Boot. Image được tạo bằng Buildpacks trong pom.xml, không dùng Dockerfile:
   #   ./mvnw spring-boot:build-image
   # rồi mới `docker compose up app`. Không tự build ở đây vì compose không tự chạy Maven được.
   app:
     image: backend:latest
+    # Chờ database và Redis khỏe mạnh; Keycloak chỉ cần khởi chạy.
     restart: unless-stopped
     depends_on:
       db:
@@ -55,10 +72,12 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_started
+    # Cổng 8080 mở ra máy host; cổng 8081 chỉ dùng trong mạng Docker.
     ports:
       - "8080:8080"
     expose:
       - "8081"
+    # Cấu hình môi trường chạy và địa chỉ các dịch vụ trong mạng Compose.
     environment:
       SPRING_PROFILES_ACTIVE: prod
       PORT: 8080
@@ -68,18 +87,22 @@ services:
       SPRING_DATASOURCE_PASSWORD: backend
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      # Bắt buộc đặt JWT_SECRET ở môi trường; Compose sẽ báo lỗi nếu thiếu.
       JWT_SECRET: ${JWT_SECRET:?set a real 32+ char secret}
+      # Issuer dùng địa chỉ localhost trong token; API lấy khóa qua hostname nội bộ keycloak.
       KEYCLOAK_ENABLED: "true"
       KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/ecommerce
       KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/ecommerce/protocol/openid-connect/certs
       KEYCLOAK_AUDIENCE: ecommerce-api
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      # Thông tin cổng thanh toán dùng giá trị sandbox/placeholder nếu chưa cấu hình.
       VNPAY_MERCHANT_CODE: ${VNPAY_MERCHANT_CODE:-CHANGE_ME}
       VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-CHANGE_ME}
       VNPAY_PAY_URL: ${VNPAY_PAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
       VNPAY_RETURN_URL: ${VNPAY_RETURN_URL:-http://localhost:8080/api/payments/webhooks/vnpay}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_CHANGE_ME}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_CHANGE_ME}
+      # Cấu hình SMTP tùy chọn để ứng dụng có thể gửi email.
       MAIL_HOST: ${MAIL_HOST:-}
       MAIL_PORT: ${MAIL_PORT:-587}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
@@ -87,6 +110,7 @@ services:
       MAIL_FROM: ${MAIL_FROM:-nguyenanhnhut0101.99@gmail.com}
       MAIL_MAX_ATTEMPTS: ${MAIL_MAX_ATTEMPTS:-5}
 
+  # Prometheus thu thập metric từ ứng dụng.
   prometheus:
     image: prom/prometheus:latest
     restart: unless-stopped
@@ -97,6 +121,7 @@ services:
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
 
+  # Loki nhận và lưu log tập trung.
   loki:
     image: grafana/loki:3.7.0
     restart: unless-stopped
@@ -105,6 +130,7 @@ services:
       - ./monitoring/loki/config.yml:/etc/loki/config.yml:ro
       - loki_data:/loki
 
+  # Alloy đọc log container và chuyển log sang Loki.
   alloy:
     image: grafana/alloy:latest
     restart: unless-stopped
@@ -116,6 +142,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - alloy_data:/var/lib/alloy/data
 
+  # Grafana cung cấp giao diện xem metric và log.
   grafana:
     image: grafana/grafana:latest
     restart: unless-stopped
@@ -129,6 +156,7 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
 
+# Các volume có tên giữ dữ liệu qua những lần tạo lại container.
 volumes:
   db_data:
   grafana_data:

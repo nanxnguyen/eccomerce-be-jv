@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    @page { size: A4 landscape; margin: 14mm; }
+    body { font-family: 'Noto Sans'; color: #172033; font-size: 9pt; }
+    h1 { color: #174ea6; }
+    .muted { color: #64748b; }
+    table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+    th { background: #eef4ff; text-align: left; }
+    th, td { border: 1px solid #dbe2ea; padding: 6px; }
+    tr { page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+  <h1 th:text="${title}">Báo cáo</h1>
+  <p class="muted" th:text="${period}"></p>
+  <table>
+    <thead><tr><th th:each="header : ${headers}" th:text="${header}"></th></tr></thead>
+    <tbody>
+      <tr th:each="row : ${rows}"><td th:each="cell : ${row}" th:text="${cell}"></td></tr>
+    </tbody>
+  </table>
+</body>
+</html>

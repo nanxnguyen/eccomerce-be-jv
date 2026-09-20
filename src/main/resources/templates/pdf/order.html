@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    @page { size: A4; margin: 18mm; }
+    body { font-family: 'Noto Sans'; color: #172033; font-size: 11pt; }
+    h1 { color: #174ea6; margin-bottom: 4px; }
+    .muted { color: #64748b; }
+    .section { margin-top: 22px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { background: #eef4ff; text-align: left; }
+    th, td { border-bottom: 1px solid #dbe2ea; padding: 8px 6px; }
+    .number { text-align: right; }
+    .total { font-size: 14pt; font-weight: bold; text-align: right; margin-top: 16px; }
+    .note { margin-top: 32px; border-top: 1px solid #dbe2ea; padding-top: 10px; font-size: 9pt; }
+  </style>
+</head>
+<body>
+  <h1 th:text="${title}">Chứng từ đơn hàng</h1>
+  <p class="muted">Mã đơn: <strong th:text="${order.id}"></strong></p>
+  <p>Ngày tạo: <span th:text="${createdAt}"></span></p>
+
+  <div class="section">
+    <h3>Thông tin người nhận</h3>
+    <div th:text="${order.recipientName}"></div>
+    <div th:text="${order.phone}"></div>
+    <div>
+      <span th:text="${order.addressLine}"></span>,
+      <span th:text="${order.ward}"></span>,
+      <span th:text="${order.district}"></span>,
+      <span th:text="${order.province}"></span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Chi tiết sản phẩm</h3>
+    <table>
+      <thead><tr><th>Sản phẩm</th><th>Mã SKU</th><th class="number">SL</th><th class="number">Đơn giá</th><th class="number">Thành tiền</th></tr></thead>
+      <tbody>
+      <tr th:each="item : ${order.items}">
+        <td th:text="${item.productName}"></td><td th:text="${item.sku}"></td>
+        <td class="number" th:text="${item.quantity}"></td>
+        <td class="number" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT')}"></td>
+        <td class="number" th:text="${#numbers.formatDecimal(item.lineTotal, 0, 'COMMA', 0, 'POINT')}"></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="total">Tổng cộng: <span th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')}"></span> ₫</p>
+  <p>Trạng thái đơn: <strong th:text="${order.status}"></strong></p>
+  <p>Thanh toán: <strong th:text="${order.paymentMethod}"></strong></p>
+  <p class="note" th:if="${invoice}">Chứng từ tham khảo của đơn hàng, không thay thế hóa đơn điện tử theo quy định.</p>
+  <p class="note" th:unless="${invoice}">Phiếu đóng gói nội bộ. Vui lòng đối chiếu hàng hóa và số lượng trước khi bàn giao.</p>
+</body>
+</html>

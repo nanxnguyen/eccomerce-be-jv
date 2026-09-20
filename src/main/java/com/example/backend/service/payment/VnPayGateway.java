@@ -1,22 +1,22 @@
 package com.example.backend.service.payment;
 
-import com.example.backend.entity.Order; // Order (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.PaymentMethod; // PaymentMethod (entity ánh xạ dữ liệu với bảng database).
-import jakarta.servlet.http.HttpServletRequest; // thông tin request/response HTTP của Servlet (HttpServletRequest).
-import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
-import org.springframework.stereotype.Component; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Component).
+import com.example.backend.entity.Order;
+import com.example.backend.entity.PaymentMethod;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-import javax.crypto.Mac; // thư viện/kiểu Mac được dùng trong file này.
-import javax.crypto.spec.SecretKeySpec; // thư viện/kiểu SecretKeySpec được dùng trong file này.
-import java.math.BigDecimal; // tính tiền chính xác, tránh sai số số thực.
-import java.net.URLEncoder; // thư viện/kiểu URLEncoder được dùng trong file này.
-import java.nio.charset.StandardCharsets; // thư viện/kiểu StandardCharsets được dùng trong file này.
-import java.security.MessageDigest; // thư viện/kiểu MessageDigest được dùng trong file này.
-import java.time.ZonedDateTime; // kiểu/thao tác thời gian chuẩn Java (ZonedDateTime).
-import java.time.format.DateTimeFormatter; // kiểu/thao tác thời gian chuẩn Java (DateTimeFormatter).
-import java.util.Enumeration; // tiện ích collection chuẩn Java (Enumeration).
-import java.util.Map; // bản đồ khóa–giá trị.
-import java.util.TreeMap; // tiện ích collection chuẩn Java (TreeMap).
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.TreeMap;
 
 // VNPay không có SDK Java chính thức - build query string + ký HMAC-SHA512 tay theo tài liệu của
 // VNPay (https://sandbox.vnpayment.vn/apis/docs/thanh-toan-pay/pay.html).
@@ -40,10 +40,12 @@ public class VnPayGateway implements PaymentGateway {
         this.returnUrl = returnUrl;
     }
 
+
     @Override
     public PaymentMethod getMethod() {
         return PaymentMethod.VNPAY;
     }
+
 
     @Override
     public PaymentInitResult initiate(Order order) {
@@ -54,7 +56,7 @@ public class VnPayGateway implements PaymentGateway {
         // VNPay LUÔN nhân amount x100 - quy ước nội bộ riêng của VNPay, KHÔNG liên quan tới quy ước
         // zero-decimal-currency của Stripe cho VND (xem StripeGateway.toStripeAmount, Task 12).
         // Đừng lấy nhầm 1 trong 2 chỗ nhân/không nhân 100 này.
-        params.put("vnp_Amount", order.getTotalAmount().multiply(BigDecimal.valueOf(100)).toBigInteger().toString());
+        params.put("vnp_Amount", order.getTotalAmount().multiply(BigDecimal.valueOf(100)).toBigInteger().toString()); // VNPay yêu cầu số tiền nhân 100 theo quy ước API.
         params.put("vnp_CurrCode", "VND");
         params.put("vnp_TxnRef", order.getId().toString());
         params.put("vnp_OrderInfo", "Thanh toan don hang " + order.getId());
@@ -65,9 +67,10 @@ public class VnPayGateway implements PaymentGateway {
         params.put("vnp_CreateDate", ZonedDateTime.now().format(CREATE_DATE_FORMAT));
 
         String query = buildQuery(params);
-        String secureHash = hmacSha512(hashSecret, query);
+        String secureHash = hmacSha512(hashSecret, query); // Ký tham số để VNPay xác minh request.
         return PaymentInitResult.redirect(payUrl + "?" + query + "&vnp_SecureHash=" + secureHash);
     }
+
 
     @Override
     public PaymentWebhookResult parseWebhook(HttpServletRequest request, String rawBody) {
@@ -84,7 +87,7 @@ public class VnPayGateway implements PaymentGateway {
         String expectedHash = hmacSha512(hashSecret, buildQuery(params));
         // MessageDigest.isEqual: so sánh constant-time, tránh timing attack dò ký tự đúng của hash
         // (khác String.equals() thường, dừng sớm ngay ký tự sai đầu tiên).
-        if (receivedHash == null || !MessageDigest.isEqual(
+        if (receivedHash == null || !MessageDigest.isEqual( // So sánh chữ ký an toàn trước khi tin dữ liệu callback.
                 receivedHash.getBytes(StandardCharsets.UTF_8), expectedHash.getBytes(StandardCharsets.UTF_8))) {
             return null;
         }

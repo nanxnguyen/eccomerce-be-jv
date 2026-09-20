@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- File cấu hình Maven: khai báo phiên bản Java, thư viện và cách đóng gói ứng dụng. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<!-- Phiên bản định dạng POM mà Maven dùng để đọc file này. -->
 	<modelVersion>4.0.0</modelVersion>
+	<!-- Kế thừa cấu hình và quản lý phiên bản thư viện mặc định của Spring Boot. -->
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.1.1</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/> <!-- Tìm parent trong kho Maven, không tìm file pom cha bên cạnh. -->
 	</parent>
+	<!-- Tọa độ Maven để nhận diện artifact này trong dự án/kho thư viện. -->
 	<groupId>com.example</groupId>
 	<artifactId>backend</artifactId>
+	<!-- Phiên bản đang phát triển; SNAPSHOT nghĩa là bản build chưa phải bản phát hành cố định. -->
 	<version>0.0.1-SNAPSHOT</version>
 	<name>backend</name>
+	<!-- Thông tin bổ sung của dự án; các trường để trống hiện chưa được dùng. -->
 	<description/>
 	<url/>
 	<licenses>
@@ -26,114 +32,154 @@
 		<tag/>
 		<url/>
 	</scm>
+	<!-- Thuộc tính dùng chung trong các plugin Maven. -->
 	<properties>
+		<!-- Biên dịch source bằng Java 17. -->
 		<java.version>17</java.version>
 	</properties>
+	<!-- Thư viện ứng dụng cần để compile hoặc chạy. -->
 	<dependencies>
+		<!-- JPA/Hibernate: ánh xạ entity Java thành bảng và truy cập database. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
+		<!-- Spring MVC: tạo REST API nhận và trả HTTP/JSON. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
 
+		<!-- Driver PostgreSQL; chỉ cần lúc chạy để Spring kết nối database. -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- Lombok sinh getter, setter, constructor... lúc compile để giảm code lặp. -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
+		<!-- Xác thực và phân quyền request bằng Spring Security. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+		<!-- Hỗ trợ API nhận và xác minh JWT, bao gồm cấu hình Keycloak resource server. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 		</dependency>
+		<!-- Health check và số liệu vận hành của ứng dụng. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
+		<!-- Xuất metric để Prometheus thu thập. -->
 		<dependency>
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
+		<!-- Kết nối Redis, dùng cho rate limiter và dữ liệu cần lưu ngoài bộ nhớ ứng dụng. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
-		<!-- Spring Boot 4.x tách autoconfiguration Flyway ra module riêng (spring-boot-flyway) khỏi
-		flyway-core/flyway-database-postgresql - thiếu dòng này thì FlywayAutoConfiguration không
-		bao giờ chạy: không lỗi, không log, chỉ âm thầm không migrate gì cả. -->
+		<!-- Bật phần tích hợp Flyway riêng của Spring Boot 4 để tự chạy migration khi khởi động. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-flyway</artifactId>
 		</dependency>
+		<!-- Bộ máy Flyway đọc các file db/migration/Vn__...sql theo thứ tự phiên bản. -->
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
 		</dependency>
+		<!-- Cú pháp PostgreSQL mà Flyway cần để chạy migration trên PostgreSQL. -->
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
 		</dependency>
+		<!-- Kiểm tra dữ liệu request theo annotation như @NotNull và @NotBlank. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
+		<!-- Gửi email qua SMTP. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
+		<!-- Tạo file Excel .xlsx cho báo cáo CMS. -->
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
 			<version>5.4.1</version>
 		</dependency>
+		<!-- Điền dữ liệu Java vào mẫu HTML dùng cho các tài liệu PDF. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+		<!-- Thymeleaf dùng OGNL để xử lý biểu thức như ${order.id} trong mẫu. -->
+		<dependency>
+			<groupId>ognl</groupId>
+			<artifactId>ognl</artifactId>
+			<version>3.4.12</version>
+		</dependency>
+		<!-- Chuyển HTML đã render thành PDF ngay trong ứng dụng Java. -->
+		<dependency>
+			<groupId>com.openhtmltopdf</groupId>
+			<artifactId>openhtmltopdf-pdfbox</artifactId>
+			<version>1.0.10</version>
+		</dependency>
+		<!-- API chính của thư viện tạo/xác minh JWT. -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
 			<version>0.12.6</version>
 		</dependency>
+		<!-- Phần chạy thực thi của JWT; không cần trên compile classpath. -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
 			<version>0.12.6</version>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- Dùng Jackson để chuyển claim JWT thành/ra JSON khi chạy. -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId>
 			<version>0.12.6</version>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- SDK gọi API thanh toán Stripe. -->
 		<dependency>
 			<groupId>com.stripe</groupId>
 			<artifactId>stripe-java</artifactId>
 			<version>28.4.0</version>
 		</dependency>
+		<!-- Tạo OpenAPI spec và giao diện Swagger UI cho REST API. -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>3.1.0</version>
 		</dependency>
+		<!-- H2 chỉ dùng trong test thay cho PostgreSQL thật. -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Hỗ trợ kiểm thử phần Spring Data JPA. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Hỗ trợ kiểm thử controller Spring MVC. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
@@ -143,6 +189,7 @@
 
 	<build>
 		<plugins>
+			<!-- Đóng gói ứng dụng Spring Boot và tạo container image bằng Buildpacks. -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -154,10 +201,12 @@
 					</image>
 				</configuration>
 			</plugin>
+			<!-- Plugin compile Java; cấu hình riêng bộ xử lý annotation của Lombok. -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<executions>
+					<!-- Lombok xử lý annotation khi biên dịch source chính. -->
 					<execution>
 						<id>default-compile</id>
 						<phase>compile</phase>
@@ -173,6 +222,7 @@
 							</annotationProcessorPaths>
 						</configuration>
 					</execution>
+					<!-- Lombok cũng cần chạy khi biên dịch source test. -->
 					<execution>
 						<id>default-testCompile</id>
 						<phase>test-compile</phase>
@@ -190,6 +240,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- Cấu hình Maven Surefire để nhận diện unit test và integration test theo tên file. -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>

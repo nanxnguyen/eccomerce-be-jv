@@ -1,20 +1,20 @@
 package com.example.backend.service.payment;
 
-import com.example.backend.entity.Order; // Order (entity ánh xạ dữ liệu với bảng database).
-import com.example.backend.entity.PaymentMethod; // PaymentMethod (entity ánh xạ dữ liệu với bảng database).
-import com.stripe.Stripe; // thư viện/kiểu Stripe được dùng trong file này.
-import com.stripe.exception.SignatureVerificationException; // thư viện/kiểu SignatureVerificationException được dùng trong file này.
-import com.stripe.exception.StripeException; // thư viện/kiểu StripeException được dùng trong file này.
-import com.stripe.model.Event; // thư viện/kiểu Event được dùng trong file này.
-import com.stripe.model.PaymentIntent; // thư viện/kiểu PaymentIntent được dùng trong file này.
-import com.stripe.net.Webhook; // thư viện/kiểu Webhook được dùng trong file này.
-import com.stripe.param.PaymentIntentCreateParams; // thư viện/kiểu PaymentIntentCreateParams được dùng trong file này.
-import jakarta.servlet.http.HttpServletRequest; // thông tin request/response HTTP của Servlet (HttpServletRequest).
-import org.springframework.beans.factory.annotation.Value; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Value).
-import org.springframework.stereotype.Component; // thành phần Spring phục vụ dependency injection/cấu hình ứng dụng (Component).
+import com.example.backend.entity.Order;
+import com.example.backend.entity.PaymentMethod;
+import com.stripe.Stripe;
+import com.stripe.exception.SignatureVerificationException;
+import com.stripe.exception.StripeException;
+import com.stripe.model.Event;
+import com.stripe.model.PaymentIntent;
+import com.stripe.net.Webhook;
+import com.stripe.param.PaymentIntentCreateParams;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal; // tính tiền chính xác, tránh sai số số thực.
-import java.math.RoundingMode; // tiện ích toán học chuẩn Java (RoundingMode).
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Component
 public class StripeGateway implements PaymentGateway {
@@ -23,14 +23,16 @@ public class StripeGateway implements PaymentGateway {
 
     public StripeGateway(@Value("${stripe.secret-key}") String secretKey,
                           @Value("${stripe.webhook-secret}") String webhookSecret) {
-        Stripe.apiKey = secretKey;
+        Stripe.apiKey = secretKey; // Cấu hình khóa dùng khi gọi Stripe.
         this.webhookSecret = webhookSecret;
     }
+
 
     @Override
     public PaymentMethod getMethod() {
         return PaymentMethod.STRIPE;
     }
+
 
     @Override
     public PaymentInitResult initiate(Order order) {
@@ -40,12 +42,13 @@ public class StripeGateway implements PaymentGateway {
                 .putMetadata("orderId", order.getId().toString())
                 .build();
         try {
-            PaymentIntent intent = PaymentIntent.create(params);
-            return PaymentInitResult.clientSecret(intent.getClientSecret());
+            PaymentIntent intent = PaymentIntent.create(params); // Tạo giao dịch thanh toán trên Stripe.
+            return PaymentInitResult.clientSecret(intent.getClientSecret()); // Client dùng secret này để hoàn tất thanh toán.
         } catch (StripeException e) {
             throw new PaymentGatewayException("Stripe PaymentIntent creation failed for order " + order.getId(), e);
         }
     }
+
 
     @Override
     public PaymentWebhookResult parseWebhook(HttpServletRequest request, String rawBody) {
